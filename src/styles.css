@@ -1,1 +1,235 @@
 /* You can add global styles to this file, and also import other style files */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Poppins, sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.625;
+  color: #666;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.page-wrapper {
+  overflow: hidden;
+  background: #e5e5e5;
+}
+
+.page-container {
+  background: #e5e5e5;
+  padding-left: 150px;
+}
+
+.main-content {
+  padding-top: 60px;
+  min-height: calc(100vh - 60px);
+  background-image: url('https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+.header-desktop {
+  background: #f9c289;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, .1);
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 150px;
+  height: 60px;
+  z-index: 3;
+}
+
+.header-desktop .section-content {
+  overflow: visible;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+.header-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section-content-p30 {
+  padding: 10px 15px;
+}
+
+.au-input-xl {
+  min-width: 600px;
+}
+
+input.au-input.au-input-xl {
+  border-radius: 40px !important;
+  margin-right: 10px;
+  line-height: 35px;
+  font-size: 13px;
+}
+
+.au-input {
+  line-height: 35px;
+  border: 1px solid #e5e5e5;
+  font-size: 13px;
+  color: #666;
+  padding: 0 15px;
+  border-radius: 3px;
+  transition: all .5s ease;
+}
+
+.cart-area.d-n {
+  display: block;
+}
+
+.cart-area i {
+  font-size: 18px;
+  float: left;
+  margin-top: 12px;
+  color: #fff;
+  margin-left: 12px;
+}
+
+.total {
+  background: #205b8d;
+  line-height: 35px;
+  color: #fff;
+  border-radius: 30px;
+  border: 1px solid #0da8e4;
+  float: left;
+  margin-top: 5px;
+  padding-left: 15px;
+  font-size: 13px;
+}
+
+.total span {
+  display: inline-block;
+  background: #fff;
+  padding: 0 13px;
+  color: #000;
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
+  margin-left: 11px;
+}
+
+.form-header {
+  display: flex;
+}
+
+.au-btn-submit {
+  position: relative;
+  right: 0;
+  min-width: 80px;
+  color: #fff;
+  border: 1px solid #205b8d;
+  border-radius: 43px;
+  background: #205b8d;
+  font-size: 13px;
+  padding: 6px 15px;
+}
+
+.au-btn-submit:hover {
+  background: #05143f;
+}
+
+.menu-sidebar {
+  width: 150px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #f9c289;
+  overflow-y: auto;
+}
+
+div.logo {
+  padding: 0 0 !important;
+}
+
+.menu-sidebar .logo {
+  background: #f9c289;
+  height: 60px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, .1);
+  border-right: 1px solid #e5e5e5;
+  position: relative;
+  z-index: 3;
+}
+
+.menu-sidebar .logo a {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.menu-sidebar .logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menu-sidebar-content {
+  position: relative;
+  height: calc(100vh - 60px);
+}
+
+.navbar-sidebar {
+  padding: 20px;
+  padding-bottom: 0;
+}
+
+.navbar-sidebar .navbar-list li a {
+  display: block;
+  color: #555;
+  font-size: 14px;
+  padding: 8px 0;
+}
+
+.navbar-sidebar .navbar-list li a:hover {
+  color: #0da8e4;
+}
+
+footer {
+  background: #232324;
+  z-index: 1;
+  position: relative;
+  text-align: center;
+  padding: 5px 0;
+}
+
+footer ul li {
+  display: inline-block;
+  font-size: 12px;
+  padding: 5px 15px;
+}
+
+footer ul li a {
+  color: #fff;
+}
+
+@media (max-width: 991px) {
+  .page-container {
+    padding-left: 0;
+  }
+  
+  .header-desktop {
+    left: 0;
+  }
+  
+  .menu-sidebar {
+    display: none;
+  }
+}

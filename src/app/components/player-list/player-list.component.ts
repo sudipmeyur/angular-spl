@@ -15,6 +15,7 @@ export class PlayerListComponent implements OnInit {
   envelopeOpen = false;
   selectedIndex = -1;
   selectedPlayer: Player | null = null;
+  displayedPlayer: Player | null = null;
   boxPositions: any[] = [{}, {}, {}, {}];
   animationFrames: any[] = [];
   
@@ -49,9 +50,9 @@ export class PlayerListComponent implements OnInit {
   initializePositions() {
     this.boxPositions = [
       { top: 10, left: 10 },
-      { top: 10, left: 120 },
-      { top: 10, left: 230 },
-      { top: 10, left: 340 }
+      { top: 10, left: 90 },
+      { top: 10, left: 170 },
+      { top: 10, left: 250 }
     ];
   }
 
@@ -162,6 +163,7 @@ export class PlayerListComponent implements OnInit {
 
   populatePlayerData() {
     if (this.selectedPlayer) {
+      this.displayedPlayer = this.selectedPlayer;
       this.playerForm = {
         name: this.selectedPlayer.name || '',
         jerseyNumber: null,
