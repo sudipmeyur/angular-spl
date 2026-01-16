@@ -1,13 +1,14 @@
-import { Component, OnInit, ElementRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, ElementRef, Renderer2, OnDestroy } from '@angular/core';
 import { Player } from 'src/app/common/player';
 import { PlayerService } from 'src/app/services/player.service';
+import { PlayerTeamRequest } from 'src/app/common/player-team-request';
 
 @Component({
   selector: 'app-player-list',
   templateUrl: './player-list.component.html',
   styleUrls: ['./player-list.component.css']
 })
-export class PlayerListComponent implements OnInit {
+export class PlayerListComponent implements OnInit, OnDestroy {
 
   players: Player[] = [];
   animationOn = false;
@@ -18,14 +19,14 @@ export class PlayerListComponent implements OnInit {
   displayedPlayer: Player | null = null;
   boxPositions: any[] = [{}, {}, {}, {}];
   animationFrames: any[] = [];
+  pollingInterval: any;
   
   playerForm = {
     name: '',
-    jerseyNumber: null,
-    position: '',
-    age: null,
+    playerType: '',
+    description: '',
     team: '',
-    nationality: ''
+    amount: null
   };
 
   constructor(
@@ -37,6 +38,13 @@ export class PlayerListComponent implements OnInit {
   ngOnInit(): void {
     this.listPlayers();
     setTimeout(() => this.initializePositions(), 100);
+    this.pollingInterval = setInterval(() => this.listPlayers(), 5000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
   }
 
   listPlayers() {
@@ -166,13 +174,36 @@ export class PlayerListComponent implements OnInit {
       this.displayedPlayer = this.selectedPlayer;
       this.playerForm = {
         name: this.selectedPlayer.name || '',
-        jerseyNumber: null,
-        position: '',
-        age: null,
+        playerType: '',
+        description: '',
         team: '',
-        nationality: ''
+        amount: null
       };
     }
+  }
+
+  savePlayer() {
+    if (!this.playerForm.team || !this.playerForm.amount) {
+      alert('Please enter team and amount');
+      return;
+    }
+
+    const request = new PlayerTeamRequest(
+      'PLAYER_CODE',
+      this.playerForm.team,
+      'S6',
+      this.playerForm.amount
+    );
+
+    this.playerService.savePlayerTeam(request).subscribe(
+      response => {
+        alert('Player saved successfully!');
+        this.listPlayers();
+      },
+      error => {
+        alert('Error saving player: ' + error.message);
+      }
+    );
   }
 
   private animateElement(element: any, target: any, duration: number, callback?: () => void) {

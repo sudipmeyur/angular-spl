@@ -49,27 +49,17 @@
           <div class="row">
             <div class="col-md-6 mb-2">
               <label class="form-label">Player Name</label>
-              <input type="text" class="form-control form-control-sm" [(ngModel)]="playerForm.name" name="name" placeholder="Enter player name">
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="playerForm.name" name="name" readonly>
             </div>
             <div class="col-md-6 mb-2">
-              <label class="form-label">Jersey Number</label>
-              <input type="number" class="form-control form-control-sm" [(ngModel)]="playerForm.jerseyNumber" name="jerseyNumber" placeholder="Enter jersey number">
+              <label class="form-label">Player Type</label>
+              <input type="text" class="form-control form-control-sm" [(ngModel)]="playerForm.playerType" name="playerType" readonly>
             </div>
           </div>
           <div class="row">
-            <div class="col-md-6 mb-2">
-              <label class="form-label">Position</label>
-              <select class="form-control form-control-sm" [(ngModel)]="playerForm.position" name="position">
-                <option value="">Select position</option>
-                <option>Forward</option>
-                <option>Midfielder</option>
-                <option>Defender</option>
-                <option>Goalkeeper</option>
-              </select>
-            </div>
-            <div class="col-md-6 mb-2">
-              <label class="form-label">Age</label>
-              <input type="number" class="form-control form-control-sm" [(ngModel)]="playerForm.age" name="age" placeholder="Enter age">
+            <div class="col-md-12 mb-2">
+              <label class="form-label">Description</label>
+              <textarea class="form-control form-control-sm" [(ngModel)]="playerForm.description" name="description" rows="2" readonly></textarea>
             </div>
           </div>
           <div class="row">
@@ -78,12 +68,12 @@
               <input type="text" class="form-control form-control-sm" [(ngModel)]="playerForm.team" name="team" placeholder="Enter team name">
             </div>
             <div class="col-md-6 mb-2">
-              <label class="form-label">Nationality</label>
-              <input type="text" class="form-control form-control-sm" [(ngModel)]="playerForm.nationality" name="nationality" placeholder="Enter nationality">
+              <label class="form-label">Amount</label>
+              <input type="number" class="form-control form-control-sm" [(ngModel)]="playerForm.amount" name="amount" placeholder="Enter amount">
             </div>
           </div>
           <div class="text-end">
-            <button type="button" class="btn btn-secondary btn-sm me-2">Save Player</button>
+            <button type="button" (click)="savePlayer()" class="btn btn-secondary btn-sm me-2">Save Player</button>
             <button type="reset" class="btn btn-secondary btn-sm">Clear</button>
           </div>
         </form>
