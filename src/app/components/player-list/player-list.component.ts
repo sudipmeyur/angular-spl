@@ -2,6 +2,7 @@ import { Component, OnInit, ElementRef, Renderer2, OnDestroy } from '@angular/co
 import { Player } from 'src/app/common/player';
 import { PlayerService } from 'src/app/services/player.service';
 import { PlayerTeamRequest } from 'src/app/common/player-team-request';
+import { TeamSeason } from 'src/app/common/team-season';
 
 @Component({
   selector: 'app-player-list',
@@ -11,21 +12,22 @@ import { PlayerTeamRequest } from 'src/app/common/player-team-request';
 export class PlayerListComponent implements OnInit, OnDestroy {
 
   players: Player[] = [];
+  teamSeasons: TeamSeason[] = [];
+  selectedTeamSeason: TeamSeason | null = null;
+  dropdownOpen = false;
   animationOn = false;
   showEnvelope = false;
   envelopeOpen = false;
-  selectedIndex = -1;
+  selectedPlayerCode: string | null = null;
   selectedPlayer: Player | null = null;
   displayedPlayer: Player | null = null;
-  boxPositions: any[] = [{}, {}, {}, {}];
+  boxPositions = new Map<string, { top: number, left: number }>();
   animationFrames: any[] = [];
   pollingInterval: any;
+  showBudgetTable = false;
   
   playerForm = {
-    name: '',
-    playerType: '',
-    description: '',
-    team: '',
+    teamSeasonCode: '',
     amount: null
   };
 
@@ -36,9 +38,8 @@ export class PlayerListComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
-    this.listPlayers();
-    setTimeout(() => this.initializePositions(), 100);
-    this.pollingInterval = setInterval(() => this.listPlayers(), 5000);
+    this.listPlayers(() => this.initializePositions());
+    this.loadTeamSeasons();
   }
 
   ngOnDestroy(): void {
@@ -47,27 +48,58 @@ export class PlayerListComponent implements OnInit, OnDestroy {
     }
   }
 
-  listPlayers() {
+  listPlayers(callback?: () => void) {
+    console.log('Calling getPlayers API');
     this.playerService.getPlayers().subscribe(
       data => {
+        console.log('API response:', data);
         this.players = data;
+        if (callback) callback();
+      },
+      error => {
+        console.error('API error:', error);
+      }
+    );
+  }
+
+  loadTeamSeasons() {
+    this.playerService.getTeamSeasons().subscribe(
+      data => {
+        this.teamSeasons = data;
       }
     );
   }
 
   initializePositions() {
-    this.boxPositions = [
-      { top: 10, left: 10 },
-      { top: 10, left: 90 },
-      { top: 10, left: 170 },
-      { top: 10, left: 250 }
-    ];
+    
+    const board = this.el.nativeElement.querySelector('#auction-board');
+    if (!board) {     
+      return;
+    }
+    const boardWidth = board.clientWidth;
+    const boxWidth = 70; // auction-box width
+    const boxHeight = 35; // auction-box height
+    const gap = 10; // gap between boxes
+    const itemsPerRow = Math.floor((boardWidth - gap) / (boxWidth + gap));
+    
+    this.boxPositions.clear();
+    
+    for (let i = 0; i < this.players.length; i++) {
+      const player = this.players[i];
+      const row = Math.floor(i / itemsPerRow);
+      const col = i % itemsPerRow;
+      
+      const left = gap + col * (boxWidth + gap);
+      const top = gap + row * (boxHeight + gap);
+      
+      this.boxPositions.set(player.code, { top, left });
+    }
   }
 
   toggleAnimation() {
     this.animationOn = !this.animationOn;
     if (this.animationOn) {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < this.players.length; i++) {
         this.animateBox(i);
       }
     } else {
@@ -82,7 +114,10 @@ export class PlayerListComponent implements OnInit, OnDestroy {
     const board = this.el.nativeElement.querySelector('#auction-board');
     if (!board) return;
     
-    const box = this.el.nativeElement.querySelector(`#player-${index}`);
+    const player = this.players[index];
+    if (!player) return;
+    
+    const box = this.el.nativeElement.querySelector(`#player-${player.code}`);
     if (!box) return;
     
     const maxTop = board.clientHeight - box.clientHeight;
@@ -91,19 +126,22 @@ export class PlayerListComponent implements OnInit, OnDestroy {
     const newTop = Math.floor(Math.random() * maxTop);
     const newLeft = Math.floor(Math.random() * maxLeft);
     
-    this.boxPositions[index] = { top: newTop, left: newLeft };
+    this.boxPositions.set(player.code, { top: newTop, left: newLeft });
     
     const frame = requestAnimationFrame(() => this.animateBox(index));
     this.animationFrames.push(frame);
   }
 
   choseThis(index: number) {
-    if (this.selectedIndex >= 0) return;
+    if (this.selectedPlayerCode) return;
     
-    this.selectedIndex = index;
-    this.selectedPlayer = this.players[index];
+    const player = this.players[index];
+    if (!player) return;
     
-    const box = this.el.nativeElement.querySelector(`#player-${index}`);
+    this.selectedPlayerCode = player.code;
+    this.selectedPlayer = player;
+    
+    const box = this.el.nativeElement.querySelector(`#player-${player.code}`);
     const container = this.el.nativeElement.querySelector('.section-box-inner');
     const stage = this.el.nativeElement.querySelector('#stage');
     
@@ -113,13 +151,18 @@ export class PlayerListComponent implements OnInit, OnDestroy {
     const containerRect = container.getBoundingClientRect();
     const stageRect = stage.getBoundingClientRect();
     
-    const originalTop = this.boxPositions[index].top;
-    const originalLeft = this.boxPositions[index].left;
+    const position = this.boxPositions.get(player.code);
+    if (!position) return;
     
-    box.setAttribute('data-original-top', originalTop);
-    box.setAttribute('data-original-left', originalLeft);
+    const originalTop = position.top;
+    const originalLeft = position.left;
     
-    this.renderer.setStyle(box, 'z-index', '1000');
+    box.setAttribute('data-original-top', originalTop.toString());
+    box.setAttribute('data-original-left', originalLeft.toString());
+    
+    this.renderer.setStyle(box, 'position', 'fixed');
+    this.renderer.setStyle(box, 'z-index', '99999');
+    this.renderer.setStyle(stage, 'z-index', '-1');
     
     const centerTop = (container.clientHeight - box.clientHeight) / 2;
     const centerLeft = (container.clientWidth - box.clientWidth);
@@ -129,25 +172,39 @@ export class PlayerListComponent implements OnInit, OnDestroy {
       const finalLeft = container.clientWidth + (stageRect.left - (containerRect.left + container.clientWidth)) + (stage.clientWidth - box.clientWidth) / 2;
       
       this.animateElement(box, { top: finalTop, left: finalLeft }, 500, () => {
+        this.renderer.setStyle(stage, 'z-index', '1');
         this.renderer.setStyle(box, 'display', 'none');
         this.showEnvelope = true;
       });
     });
   }
 
-  sendBack() {
-    if (this.selectedIndex < 0) return;
-    
+  closeEnvelope() {
     this.envelopeOpen = false;
     this.showEnvelope = false;
+  }
+
+  clearPlayerSelection() {
+    this.selectedPlayerCode = null;
+    this.selectedPlayer = null;
+  }
+
+  sendBack() {
+    if (!this.selectedPlayerCode) return;
     
-    const box = this.el.nativeElement.querySelector(`#player-${this.selectedIndex}`);
+    this.closeEnvelope();
+    
+    const box = this.el.nativeElement.querySelector(`#player-${this.selectedPlayerCode}`);
     const container = this.el.nativeElement.querySelector('.section-box-inner');
+    const stage = this.el.nativeElement.querySelector('#stage');
     
     if (!box || !container) return;
     
     this.renderer.setStyle(box, 'display', 'block');
-    this.renderer.setStyle(box, 'z-index', '1000');
+    this.renderer.setStyle(box, 'position', 'fixed');
+    this.renderer.setStyle(stage, 'z-index', '-1');
+    this.renderer.setStyle(box, 'z-index', '99999');
+    
     
     const originalTop = parseFloat(box.getAttribute('data-original-top'));
     const originalLeft = parseFloat(box.getAttribute('data-original-left'));
@@ -157,9 +214,9 @@ export class PlayerListComponent implements OnInit, OnDestroy {
     
     this.animateElement(box, { top: centerTop, left: centerLeft }, 500, () => {
       this.animateElement(box, { top: originalTop, left: originalLeft }, 500, () => {
+        this.renderer.setStyle(stage, 'z-index', '1');
         this.renderer.setStyle(box, 'z-index', '');
-        this.selectedIndex = -1;
-        this.selectedPlayer = null;
+        this.clearPlayerSelection();
       });
     });
   }
@@ -173,37 +230,93 @@ export class PlayerListComponent implements OnInit, OnDestroy {
     if (this.selectedPlayer) {
       this.displayedPlayer = this.selectedPlayer;
       this.playerForm = {
-        name: this.selectedPlayer.name || '',
-        playerType: '',
-        description: '',
-        team: '',
+        teamSeasonCode: '',
         amount: null
       };
+      this.selectedTeamSeason = null;
     }
   }
 
+  toggleDropdown() {
+    this.dropdownOpen = !this.dropdownOpen;
+  }
+
+  selectTeamSeason(teamSeason: TeamSeason) {
+    this.selectedTeamSeason = teamSeason;
+    this.playerForm.teamSeasonCode = teamSeason.code;
+    this.dropdownOpen = false;
+  }
+
   savePlayer() {
-    if (!this.playerForm.team || !this.playerForm.amount) {
-      alert('Please enter team and amount');
+    if (!this.playerForm.teamSeasonCode || !this.playerForm.amount) {
+      alert('Please select team season and enter amount');
+      return;
+    }
+
+    const confirmMessage = `Confirm player assignment:\n\nPlayer: ${this.selectedPlayer?.name}\nTeam: ${this.selectedTeamSeason?.team.name}\nAmount: $${this.playerForm.amount}\n\nProceed with save?`;
+    
+    if (!confirm(confirmMessage)) {
       return;
     }
 
     const request = new PlayerTeamRequest(
-      'PLAYER_CODE',
-      this.playerForm.team,
-      'S6',
+      this.selectedPlayer?.code || '',
+      this.playerForm.teamSeasonCode,
       this.playerForm.amount
     );
 
     this.playerService.savePlayerTeam(request).subscribe(
       response => {
         alert('Player saved successfully!');
+        this.resetFormData();
+        this.closeEnvelope();
+        this.clearPlayerSelection();
         this.listPlayers();
+        this.loadTeamSeasons();
       },
       error => {
         alert('Error saving player: ' + error.message);
       }
     );
+  }
+
+  resetFormData() {
+    this.playerForm = {
+      teamSeasonCode: '',
+      amount: null
+    };
+    this.selectedTeamSeason = null;
+    this.displayedPlayer = null;
+  }
+
+  cancelSelection() {
+    this.resetFormData();
+    this.sendBack();
+  }
+
+  toggleBudgetTable() {
+    this.showBudgetTable = !this.showBudgetTable;
+  }
+
+  getProgressPercentage(teamSeason: TeamSeason): number {
+    return ((teamSeason?.totalAmountSpent || 0) / (teamSeason?.season?.budgetLimit || 1)) * 100;
+  }
+
+  getPlayerLevelColor(playerLevelCode: string): string {
+    const colors: { [key: string]: string } = {
+      'l1': '#dc3545', // red
+      'l2': '#fd7e14', // orange
+      'l3': '#ffc107', // yellow
+      'l4': '#198754', // green
+      'l5': '#0d6efd', // blue
+      'l6': '#6f42c1'  // purple
+    };
+    return colors[playerLevelCode] || '#6c757d';
+  }
+
+  getPlayerLevelPercentage(teamSeason: TeamSeason, playerLevel: any): number {
+    const budgetLimit = teamSeason?.season?.budgetLimit || 1;
+    return ((playerLevel?.totalAmountSpent || 0) / budgetLimit) * 100;
   }
 
   private animateElement(element: any, target: any, duration: number, callback?: () => void) {

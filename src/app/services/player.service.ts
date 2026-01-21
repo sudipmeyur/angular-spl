@@ -3,8 +3,9 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Player } from '../common/player';
 import { PlayerTeamRequest } from '../common/player-team-request';
+import { TeamSeason } from '../common/team-season';
 import { map } from 'rxjs/operators';
-import { PLAYERS_URL, PLAYER_TEAMS_URL } from '../config/constants';
+import { PLAYERS_URL, PLAYER_TEAMS_URL, TEAM_SEASONS_URL } from '../config/constants';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,13 @@ export class PlayerService {
 
   getPlayers(): Observable<Player[]>{
     return this.httpClient.get<GetResponse>(`${PLAYERS_URL}/available?seasonCode=S6&playerLevelCode=L2`).pipe(
-      map(response => response.data.players)  
+      map(response => response.data.items)  
+    );
+  }
+
+  getTeamSeasons(): Observable<TeamSeason[]> {
+    return this.httpClient.get<TeamSeasonResponse>(`${TEAM_SEASONS_URL}?seasonCode=S6`).pipe(
+      map(response => response.data.items)
     );
   }
 
@@ -26,6 +33,12 @@ export class PlayerService {
 
 interface GetResponse {
   data: {
-    players: Player[];
+    items: Player[];
+  }
+}
+
+interface TeamSeasonResponse {
+  data: {
+    items: TeamSeason[];
   }
 }
