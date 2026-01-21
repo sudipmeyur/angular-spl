@@ -95,13 +95,13 @@
         <h6 class="mb-3 text-warning"><i class="fas fa-chart-bar"></i> Team Budget Overview</h6>
         <div class="team-budget-list">
           <div *ngFor="let teamSeason of teamSeasons" class="team-budget-item mb-2">
-            <div class="d-flex align-items-center mb-1">
+            <div class="d-flex align-items-center mb-2">
               <img [src]="teamSeason?.team?.logoUrl || 'assets/images/team-placeholder.png'" 
-                   alt="Team Logo" class="team-logo-small me-2">
-              <span class="team-name">{{teamSeason?.team?.name}}</span>
-              <span class="ms-auto text-muted small">{{getProgressPercentage(teamSeason) | number:'1.0-0'}}%</span>
+                   alt="Team Logo" class="team-logo-medium me-3">
+              <span class="team-name-large">{{teamSeason?.team?.name}}</span>
+              <span class="ms-auto percentage-large">{{getProgressPercentage(teamSeason) | number:'1.0-0'}}%</span>
             </div>
-            <div class="progress" style="height: 8px;">
+            <div class="progress" style="height: 16px; border-radius: 8px;">
               <div *ngFor="let playerLevel of teamSeason?.teamSeasonPlayerLevels; let i = index" 
                    class="progress-bar" 
                    [style.background]="getPlayerLevelColor(playerLevel.playerLevel.code)"
