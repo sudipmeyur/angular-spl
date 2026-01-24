@@ -1,9 +1,17 @@
 export class PlayerLevel {
+    id: number;
     code: string;
     name: string;
+    baseAmount?: number;
+    isFree?: boolean;
 
-    constructor(code: string, name: string) {
+    constructor(id: number, code: string, name?: string, baseAmount?: number, isFree?: boolean) {
+        this.id = id;
         this.code = code;
-        this.name = name;
+        this.name = name || code;
+        this.baseAmount = baseAmount;
+        this.isFree = isFree;
     }
+
+
 }

@@ -3,21 +3,39 @@ import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 
 import { AppComponent } from './app.component';
-import { PlayerListComponent } from './components/player-list/player-list.component';
+import { PlayerAuctionComponent } from './components/player-auction/player-auction.component';
+import { TeamSquadComponent } from './components/team-squad/team-squad.component';
 import { HttpClientModule } from '@angular/common/http';
 import { PlayerService } from './services/player.service';
+import { SeasonService } from './services/season.service';
+import { DashboardComponent } from './components/dashboard/dashboard.component';
+
+import { Routes,RouterModule } from '@angular/router';
+
+const routes:Routes = [
+  {path:'auction/:playerLevelId',component: PlayerAuctionComponent},
+  {path:'auction/',component: PlayerAuctionComponent},
+  {path:'team-squad/:id',component: TeamSquadComponent},
+  {path:'dashboard',component: DashboardComponent},
+  {path:'',redirectTo:'/dashboard', pathMatch:'full'},
+  {path:'**',redirectTo:'/dashboard', pathMatch:'full'}
+];
+
 
 @NgModule({
   declarations: [
     AppComponent,
-    PlayerListComponent
+    PlayerAuctionComponent,
+    TeamSquadComponent,
+    DashboardComponent
   ],
   imports: [
+    RouterModule.forRoot(routes),
     BrowserModule,
     HttpClientModule,
     FormsModule
   ],
-  providers: [PlayerService],
+  providers: [PlayerService, SeasonService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

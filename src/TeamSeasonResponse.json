@@ -1,0 +1,59 @@
+{
+    "data": {
+        "item": {
+            "code": "tm1s6",
+            "id": 1,
+            "playerTeams": [
+                {
+                    "isManager": false,
+                    "isRtmUsed": false,
+                    "player": {
+                        "code": "pl3",
+                        "imageUrl": "assets/images/players/1002.png",
+                        "name": "Bittu Roy",
+                        "playerLevel": {
+                            "code": "l2"
+                        }
+                    },
+                    "soldAmount": 12.00
+                },
+                {
+                    "isManager": true,
+                    "isRtmUsed": false,
+                    "player": {
+                        "code": "pl6",
+                        "imageUrl": "assets/images/players/1005.png",
+                        "name": "Subhasis Mondal",
+                        "playerLevel": {
+                            "code": "l2"
+                        }
+                    },
+                    "soldAmount": 0.00
+                }
+            ],
+            "season": {
+                "budgetLimit": 100.00,
+                "code": "s6",
+                "maxPlayersAllowed": 11,
+                "maxRtmAllowed": 1
+            },
+            "team": {
+                "code": "tm1",
+                "logoUrl": "assets/images/teams/supreme-power.png",
+                "name": "Supreme Power"
+            },
+            "teamSeasonPlayerLevels": [
+                {
+                    "playerLevel": {
+                        "code": "l2"
+                    },
+                    "totalAmountSpent": 12.00,
+                    "totalPlayerCount": 1
+                }
+            ],
+            "totalAmountSpent": 12.00,
+            "totalPlayer": 1,
+            "totalRtmUsed": null
+        }
+    }
+}

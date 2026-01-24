@@ -1,0 +1,28 @@
+.navbar-list li a.active {
+  background-color: rgba(255, 215, 0, 0.2) !important;
+  color: #FFD700 !important;
+  font-weight: bold;
+}
+
+.navbar-list li a:hover {
+  background-color: rgba(255, 215, 0, 0.1);
+  color: #FFD700;
+}
+
+.navbar-sidebar-submenu li a {
+  padding: 8px 15px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.navbar-sidebar-submenu li a.active {
+  background-color: rgba(255, 215, 0, 0.3) !important;
+  color: #FFD700 !important;
+  font-weight: bold;
+  border-left: 3px solid #FFD700;
+}
+
+.navbar-sidebar-submenu li a:hover {
+  background-color: rgba(255, 215, 0, 0.15);
+  color: #FFD700;
+}

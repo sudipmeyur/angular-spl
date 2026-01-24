@@ -1,0 +1,154 @@
+<div class="container-fluid" *ngIf="!loading && teamSquadData">
+  <!-- Team Header -->
+  <div class="team-header mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-2 text-center">
+        <img [src]="teamSeason?.team?.logoUrl" 
+             [alt]="teamSeason?.team?.name"
+             class="team-logo"
+             (error)="onImageError($event)">
+      </div>
+      <div class="col-md-10">
+        <h1 class="team-name">{{ teamSeason?.team?.name }}</h1>
+        <div class="team-info">
+          <span class="badge me-2">Season: {{ currentSeasonCode }}</span>
+          <span class="badge me-2">Budget: {{ formatAmount(currentSeason?.budgetLimit || 0) }}</span>
+          <span class="badge">Spent: {{ formatAmount(teamSquadData.grandTotal) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- Team Manager Section -->
+  <div class="manager-section mb-4" *ngIf="teamSquadData.manager">
+    <h3 class="section-title">
+      <i class="fas fa-user-tie me-2"></i>Team Manager
+    </h3>
+    <div class="row">
+      <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+        <div class="player-card manager-card">
+          <div class="card-image">
+            <img [src]="teamSquadData.manager.player.imageUrl" 
+                 [alt]="teamSquadData.manager.player.name"
+                 class="player-image"
+                 (error)="onImageError($event)">
+          </div>
+          <div class="card-content">
+            <h5 class="player-name" [title]="teamSquadData.manager.player.name">{{ teamSquadData.manager.player.name }}</h5>
+            <p class="player-amount">{{ formatAmount(teamSquadData.manager.soldAmount) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- Players by Level -->
+  <div class="players-section" *ngFor="let level of teamSeason?.teamSeasonPlayerLevels">
+    <div *ngIf="teamSquadData.playersByLevel[level.playerLevel.code] && teamSquadData.playersByLevel[level.playerLevel.code].players.length > 0">
+      <div class="level-header-card mb-3">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h3 class="level-title">
+            <i class="fas fa-layer-group me-2"></i>{{ getLevelDisplayName(level.playerLevel.code) }}
+          </h3>
+        </div>
+        <div class="col-md-4 text-end">
+          <span class="level-total">
+            Total Amount: <strong>{{ formatAmount(level.totalAmountSpent) }}</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="level-divider" [style.border-color]="getPlayerLevelColor(level.playerLevel.code)">
+
+    <!-- Players Grid -->
+    <div class="row players-grid mb-4">
+      <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6 col-6 mb-3" 
+           *ngFor="let playerTeam of teamSquadData.playersByLevel[level.playerLevel.code].players">
+        <div class="player-card" [style.border-color]="getPlayerLevelColor(level.playerLevel.code)">
+          <div class="card-image">
+            <img [src]="playerTeam.player.imageUrl" 
+                 [alt]="playerTeam.player.name"
+                 class="player-image"
+                 (error)="onImageError($event)">
+            <div class="level-badge">
+              {{ level.playerLevel.code.toUpperCase() }}
+            </div>
+          </div>
+          <div class="card-content">
+            <h6 class="player-name" [title]="playerTeam.player.name">{{ playerTeam.player.name }}</h6>
+            <p class="player-amount">{{ formatAmount(playerTeam.soldAmount) }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div> <!-- End conditional display for level -->
+    <hr class="section-divider">
+  </div>
+
+  <!-- Grand Total -->
+  <div class="grand-total-section">
+    <div class="row">
+      <div class="col-12">
+        <div class="grand-total-card">
+          <div class="row align-items-center">
+            <div class="col-md-8">
+              <h2 class="grand-total-title">
+                <i class="fas fa-calculator me-2"></i>Grand Total
+              </h2>
+            </div>
+            <div class="col-md-4 text-end">
+              <h2 class="grand-total-amount">{{ formatAmount(teamSquadData.grandTotal) }}</h2>
+            </div>
+          </div>
+          <div class="row mt-2">
+            <div class="col-12">
+              <div class="progress">
+                <div class="progress-bar" 
+                     [style.width.%]="getBudgetPercentage()"
+                     [class]="getBudgetProgressClass()">
+                  {{ getBudgetPercentage().toFixed(1) }}% of Budget Used
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="loading">
+  <div class="text-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading team squad...</p>
+  </div>
+</div>
+
+<!-- Error State -->
+<!-- <div class="error-container" *ngIf="error && !loading">
+  <div class="alert alert-danger" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+    <button class="btn btn-outline-danger btn-sm ms-2" (click)="loadTeamSquad()">
+      <i class="fas fa-redo me-1"></i>Retry
+    </button>
+  </div>
+</div> -->
+
+<!-- No Data State -->
+<div class="no-data-container" *ngIf="!loading && !error && !teamSquadData">
+  <div class="text-center">
+    <i class="fas fa-users fa-3x mb-3"></i>
+    <h4>No Team Selected</h4>
+    <p>Please select a team from the navigation menu to view squad details.</p>
+  </div>
+</div>

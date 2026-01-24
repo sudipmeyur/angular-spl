@@ -1,0 +1,48 @@
+<!-- Team Selection Section (shown when no team is selected) -->
+<div class="team-selection-container" *ngIf="!teamSquadData && !loading">
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center mb-4">
+        <h2 class="selection-title">
+          <i class="fas fa-users me-2"></i>Select Team Squad
+        </h2>
+        <p class="selection-subtitle">Choose a team to view their complete squad details</p>
+      </div>
+    </div>
+    
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="teams-grid">
+          <div class="row">
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4" *ngFor="let teamSeason of availableTeams">
+              <div class="team-selection-card" (click)="selectTeam(teamSeason.team.code)">
+                <div class="team-card-image">
+                  <img [src]="teamSeason.team.logoUrl" 
+                       [alt]="teamSeason.team.name"
+                       class="team-selection-logo"
+                       (error)="onImageError($event)">
+                </div>
+                <div class="team-card-content">
+                  <h5 class="team-selection-name">{{ teamSeason.team.name }}</h5>
+                  <div class="team-stats">
+                    <small class="text-muted">
+                      <i class="fas fa-users me-1"></i>{{ teamSeason.totalPlayer || 0 }} Players
+                    </small>
+                    <br>
+                    <small class="text-success">
+                      <i class="fas fa-rupee-sign me-1"></i>{{ formatAmount(teamSeason.totalAmountSpent || 0) }} Spent
+                    </small>
+                  </div>
+                </div>
+                <div class="team-card-overlay">
+                  <i class="fas fa-eye"></i>
+                  <span>View Squad</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

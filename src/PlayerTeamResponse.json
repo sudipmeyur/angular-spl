@@ -1,0 +1,19 @@
+{
+    "code": "pl1tm2s6",
+    "isManager": false,
+    "isRtmUsed": false,
+    "player": {
+        "code": "pl1",
+        "id": 1,
+        "imageUrl": "assets/images/players/1000.png",
+        "name": "Sudip Meyur",
+        "playerLevel": {
+            "baseAmount": 3.00,
+            "code": "l2",
+            "id": 2,
+            "isFree": false
+        }
+    },
+    "soldAmount": 35.00,
+    "updatedAt": "2026-01-24T08:19:15.0603958"
+}

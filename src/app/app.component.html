@@ -9,16 +9,35 @@
     <div class="menu-sidebar-content js-scrollbar1">
       <nav class="navbar-sidebar">
         <ul class="list-unstyled navbar-list">
-          <li>
-            <a href="#">Auction</a>
+          <li style="border-top: 0.2px solid #ced4da; margin-top: 5px; padding-top: 5px;">
+            <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
           </li>
-          <li>
-            <a href="#">Team Squad</a>
+          <li class="has-sub">
+            <a class="js-arrow" href="#" (click)="toggleAuctionMenu($event)" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Auction</span>
+              <i class="fa fa-chevron-right" id="auction-arrow" style="font-size: 12px;"></i>
+            </a>
+            <ul class="list-unstyled navbar-mobile-sub__list navbar-sidebar-submenu" id="auction-submenu" style="display: none; padding-left: 30px; border-top: 0.2px solid #ced4da;">
+              <li><a routerLink="/auction/1" routerLinkActive="active">L1</a></li>
+              <li><a routerLink="/auction/2" routerLinkActive="active">L2</a></li>
+              <li><a routerLink="/auction/3" routerLinkActive="active">L3</a></li>
+              <li><a routerLink="/auction/4" routerLinkActive="active">L4</a></li>
+            </ul>
           </li>
-          <li>
-            <a href="#">Dashboard</a>
+          <li class="has-sub">
+            <a class="js-arrow" href="#" (click)="toggleTeamSquadMenu($event)" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Team Squad</span>
+              <i class="fa fa-chevron-right" id="team-squad-arrow" style="font-size: 12px;"></i>
+            </a>
+            <ul class="list-unstyled navbar-mobile-sub__list navbar-sidebar-submenu" id="team-squad-submenu" style="display: none; padding-left: 30px; border-top: 0.2px solid #ced4da;">
+              <li *ngFor="let teamSeason of availableTeams">
+                <a [routerLink]="['/team-squad', teamSeason.id]" routerLinkActive="active">
+                  {{ teamSeason.team.name }}
+                </a>
+              </li>
+            </ul>
           </li>
-          <li>
+          <li style="border-top: 0.2px solid #ced4da; margin-top: 5px; padding-top: 5px;">
             <a href="#">Settings</a>
           </li>
         </ul>
@@ -54,7 +73,8 @@
     <!-- MAIN CONTENT-->
     <div class="main-content">
       <div class="section-content section-content-p30">
-        <app-player-list></app-player-list>
+        <!-- <app-player-auction></app-player-auction> -->
+         <router-outlet></router-outlet>
       </div>
     </div>
   </div>

@@ -16,4 +16,5 @@ export class Player {
         this.imageUrl = imageUrl;
         this.playerLevel = playerLevel;
     }
+
 }

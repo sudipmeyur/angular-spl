@@ -3,24 +3,38 @@ import { Player } from 'src/app/common/player';
 import { PlayerService } from 'src/app/services/player.service';
 import { PlayerTeamRequest } from 'src/app/common/player-team-request';
 import { TeamSeason } from 'src/app/common/team-season';
+import { ActivatedRoute } from '@angular/router';
+import { SeasonService } from 'src/app/services/season.service';
+import { Season } from 'src/app/common/season';
+import { PlayerLevel } from 'src/app/common/player-level';
 
 @Component({
-  selector: 'app-player-list',
-  templateUrl: './player-list.component.html',
-  styleUrls: ['./player-list.component.css']
+  selector: 'app-player-auction',
+  templateUrl: './player-auction.component.html',
+  styleUrls: ['./player-auction.component.css']
 })
-export class PlayerListComponent implements OnInit, OnDestroy {
+export class PlayerAuctionComponent implements OnInit, OnDestroy {
+
+  currentPlayerLevelCode: string = 'l1';
+  currentPlayerLevelId: number = 1;
+  currentSeason: Season | null = null;
+  currentPlayerLevel: PlayerLevel | null |undefined = null;
+  currentSeasonCode: string = 's6';
+  currentSeasonId: number = 6;
 
   players: Player[] = [];
   teamSeasons: TeamSeason[] = [];
-  selectedTeamSeason: TeamSeason | null = null;
+  
   dropdownOpen = false;
   animationOn = false;
   showEnvelope = false;
   envelopeOpen = false;
+
+  selectedTeamSeason: TeamSeason | null = null;
   selectedPlayerCode: string | null = null;
   selectedPlayer: Player | null = null;
   displayedPlayer: Player | null = null;
+
   boxPositions = new Map<string, { top: number, left: number }>();
   animationFrames: any[] = [];
   pollingInterval: any;
@@ -30,16 +44,44 @@ export class PlayerListComponent implements OnInit, OnDestroy {
     teamSeasonCode: '',
     amount: null
   };
+  
 
   constructor(
     private playerService: PlayerService,
+    private seasonService: SeasonService,
     private el: ElementRef,
-    private renderer: Renderer2
+    private renderer: Renderer2,
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit(): void {
-    this.listPlayers(() => this.initializePositions());
-    this.loadTeamSeasons();
+    this.seasonService.currentSeason$.subscribe(season => {
+      if (season) {
+        this.currentSeason = season;
+        this.currentSeasonCode = season?.code || this.currentSeasonCode;
+        this.currentSeasonId = season.id;
+        this.route.paramMap.subscribe(() => {
+
+          const hasLevelId: boolean = this.route.snapshot.paramMap.has('playerLevelId');
+          if (hasLevelId) {
+            const playerLevelId = +this.route.snapshot.paramMap.get('playerLevelId')!;
+
+            this.currentPlayerLevel = this.seasonService.getPlayerLevelById(playerLevelId);
+
+            if (this.currentPlayerLevel) {
+              this.currentPlayerLevelCode = this.currentPlayerLevel.code;
+              this.currentPlayerLevelId = this.currentPlayerLevel.id;
+              console.log('Level Code:', this.currentPlayerLevelCode);
+
+              this.listPlayers(() => this.initializePositions());
+            } else {
+              console.warn('Player level not found for ID:', playerLevelId);
+            } console.log('Level Code:', this.currentPlayerLevelCode);
+          }
+        });
+        this.loadTeamSeasons();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -49,8 +91,11 @@ export class PlayerListComponent implements OnInit, OnDestroy {
   }
 
   listPlayers(callback?: () => void) {
-    console.log('Calling getPlayers API');
-    this.playerService.getPlayers().subscribe(
+    console.log('Calling getPlayers API with season:', this.currentSeason);
+
+    
+
+    this.playerService.getPlayers(this.currentPlayerLevelId, this.currentSeasonId).subscribe(
       data => {
         console.log('API response:', data);
         this.players = data;
@@ -63,7 +108,7 @@ export class PlayerListComponent implements OnInit, OnDestroy {
   }
 
   loadTeamSeasons() {
-    this.playerService.getTeamSeasons().subscribe(
+    this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
       data => {
         this.teamSeasons = data;
       }
