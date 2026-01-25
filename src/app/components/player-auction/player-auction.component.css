@@ -702,6 +702,21 @@ body::before {
   transition: all 0.3s ease;
 }
 
+.selection-mode-toggle .btn.btn-disabled {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.selection-mode-toggle .btn.btn-disabled:hover {
+  background-color: #6c757d !important;
+  border-color: #6c757d !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  transform: none !important;
+}
+
 .shuffle-cards-container {
   background: rgba(255, 255, 255, 0.03);
   border-radius: 8px;
@@ -718,10 +733,10 @@ body::before {
 }
 
 .cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+  display: flex;
+  flex-direction: row;
   gap: 6px;
-  justify-items: center;
+  align-items: center;
   width: 100%;
   min-height: 60px;
   max-height: 60px;
@@ -729,8 +744,29 @@ body::before {
   z-index: 1;
   margin-bottom: 6px;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   box-sizing: border-box;
+  padding: 2px 0;
+}
+
+/* Custom scrollbar for cards grid */
+.cards-grid::-webkit-scrollbar {
+  height: 4px;
+}
+
+.cards-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
+.cards-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.4);
+  border-radius: 2px;
+}
+
+.cards-grid::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.6);
 }
 
 .shuffle-card {
@@ -739,6 +775,8 @@ body::before {
   perspective: 1000px;
   cursor: pointer;
   transition: transform 0.3s ease;
+  flex-shrink: 0;
+  flex-grow: 0;
 }
 
 .shuffle-card:hover {
@@ -972,9 +1010,31 @@ body::before {
   transform: translateY(-1px);
 }
 
+.rtm-toggle-btn.rtm-disabled {
+  background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+  border-color: #6c757d !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  transform: none !important;
+}
+
+.rtm-toggle-btn.rtm-disabled:hover {
+  background: linear-gradient(135deg, #6c757d, #5a6268) !important;
+  border-color: #6c757d !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
 .rtm-toggle-btn i {
   font-size: 16px;
   margin-right: 4px;
+}
+
+/* RTM Toggle Tooltip Styles - Simple browser tooltip */
+.rtm-toggle-btn[title] {
+  position: relative;
 }
 
 /* Amount Input Styles */

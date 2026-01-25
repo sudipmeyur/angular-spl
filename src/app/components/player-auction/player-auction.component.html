@@ -73,6 +73,8 @@
                         class="btn btn-sm" 
                         [class.btn-warning]="selectionMode === 'shuffle'"
                         [class.btn-outline-warning]="selectionMode !== 'shuffle'"
+                        [class.btn-disabled]="!isShuffleCardsEnabled()"
+                        [disabled]="!isShuffleCardsEnabled()"
                         (click)="setSelectionMode('shuffle')">
                   <i class="fas fa-random me-1"></i>Shuffle Cards
                 </button>
@@ -181,6 +183,9 @@
                             class="btn btn-sm rtm-toggle-btn" 
                             [class.rtm-on]="playerForm.isRtmUsed"
                             [class.rtm-off]="!playerForm.isRtmUsed"
+                            [class.rtm-disabled]="isRtmDisabled()"
+                            [disabled]="isRtmDisabled()"
+                            [title]="isRtmExhausted() && selectedTeamSeason ? 'RTM exhausted for ' + selectedTeamSeason.team.name : null"
                             (click)="toggleRtm()">
                       <i class="fas" [class.fa-toggle-on]="playerForm.isRtmUsed" [class.fa-toggle-off]="!playerForm.isRtmUsed"></i>
                       <span class="ms-1">{{playerForm.isRtmUsed ? 'ON' : 'OFF'}}</span>

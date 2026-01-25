@@ -87,12 +87,22 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
             if (this.currentPlayerLevel) {
               this.currentPlayerLevelCode = this.currentPlayerLevel.code;
               this.currentPlayerLevelId = this.currentPlayerLevel.id;
-              console.log('Level Code:', this.currentPlayerLevelCode);
+              console.log('Player level changed to:', this.currentPlayerLevelCode, 'isFree:', this.currentPlayerLevel.isFree);
+
+              // Ensure selection mode is valid for current player level
+              if (this.selectionMode === 'shuffle' && !this.isShuffleCardsEnabled()) {
+                this.selectionMode = 'manual';
+                this.resetShuffle();
+              }
+
+              // Always rebuild selectable team seasons when player level changes
+              // This ensures the filtering is applied based on the new player level properties
+              this.rebuildSelectableTeamSeasons();
 
               this.listPlayers(() => this.initializePositions());
             } else {
               console.warn('Player level not found for ID:', playerLevelId);
-            } console.log('Level Code:', this.currentPlayerLevelCode);
+            }
           }
         });
         this.loadTeamSeasons();
@@ -125,24 +135,77 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   loadTeamSeasons() {
+    console.log('Loading team seasons from API for season ID:', this.currentSeasonId);
     this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
       data => {
+        console.log('Team seasons loaded from API:', data.length, 'teams');
         this.teamSeasons = data;
-        this.selectableTeamSeasons = this.teamSeasons.filter(teamSeason => {
-          if(this.currentSeason){
-            let isSelectable = this.currentSeason.maxPlayersAllowed > (teamSeason.totalPlayer || 0);
-            if(isSelectable && (this.currentPlayerLevel && this.currentPlayerLevel.isFree)){
-              isSelectable = this.currentSeason.maxFreeAllowed > (teamSeason.totalFreeUsed || 0);
-            }
-            return isSelectable;
-          }else{
-            return false;
-          }
-          
-        });
+        // Always rebuild selectable team seasons after loading from API
+        // This ensures the filtering is applied based on current player level
+        this.rebuildSelectableTeamSeasons();
+      },
+      error => {
+        console.error('Error loading team seasons:', error);
+        // Initialize empty arrays on error
+        this.teamSeasons = [];
+        this.selectableTeamSeasons = [];
         this.initializeShuffleCards();
       }
     );
+  }
+
+  rebuildSelectableTeamSeasons() {
+    console.log('=== REBUILDING SELECTABLE TEAM SEASONS ===');
+    console.log('Current player level:', this.currentPlayerLevel?.code, 'isFree:', this.currentPlayerLevel?.isFree);
+    console.log('Current season:', this.currentSeason?.code);
+    console.log('Total team seasons available:', this.teamSeasons?.length || 0);
+    
+    // If team seasons haven't been loaded yet, initialize empty array and return
+    if (!this.teamSeasons || this.teamSeasons.length === 0) {
+      console.log('Team seasons not loaded yet, initializing empty selectable teams');
+      this.selectableTeamSeasons = [];
+      this.initializeShuffleCards();
+      return;
+    }
+    
+    // Store previous selectable teams for comparison
+    const previousSelectableTeams = this.selectableTeamSeasons.map(ts => ts.code);
+    
+    this.selectableTeamSeasons = this.teamSeasons.filter(teamSeason => {
+      if(this.currentSeason){
+        let isSelectable = this.currentSeason.maxPlayersAllowed > (teamSeason.totalPlayer || 0);
+        console.log(`Team ${teamSeason.team.name}: players ${teamSeason.totalPlayer || 0}/${this.currentSeason.maxPlayersAllowed} - selectable: ${isSelectable}`);
+        
+        if(isSelectable && (this.currentPlayerLevel && this.currentPlayerLevel.isFree)){
+          isSelectable = this.currentSeason.maxFreeAllowed > (teamSeason.totalFreeUsed || 0);
+          console.log(`Team ${teamSeason.team.name}: free players ${teamSeason.totalFreeUsed || 0}/${this.currentSeason.maxFreeAllowed} - selectable: ${isSelectable}`);
+        }
+        return isSelectable;
+      }else{
+        console.log('No current season available for filtering');
+        return false;
+      }
+      
+    });
+    
+    // Check if the selectable teams have changed
+    const newSelectableTeams = this.selectableTeamSeasons.map(ts => ts.code);
+    const teamsChanged = JSON.stringify(previousSelectableTeams.sort()) !== JSON.stringify(newSelectableTeams.sort());
+    
+    console.log('Final selectable team seasons count:', this.selectableTeamSeasons.length, 'out of', this.teamSeasons.length);
+    console.log('Final selectable teams:', this.selectableTeamSeasons.map(ts => ts.team.name));
+    console.log('Teams changed:', teamsChanged);
+    
+    // If the currently selected team is no longer selectable, clear the selection
+    if (this.selectedTeamSeason && !this.selectableTeamSeasons.find(ts => ts.code === this.selectedTeamSeason!.code)) {
+      console.log('Currently selected team is no longer selectable, clearing selection');
+      this.selectedTeamSeason = null;
+      this.playerForm.teamSeasonCode = '';
+      this.dropdownOpen = false;
+    }
+    
+    console.log('=== REBUILD COMPLETE ===');
+    this.initializeShuffleCards();
   }
 
   initializeShuffleCards() {
@@ -339,6 +402,13 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.selectedTeamSeason = teamSeason;
     this.playerForm.teamSeasonCode = teamSeason.code;
     this.dropdownOpen = false;
+    
+    // Reset RTM state when selecting a new team to ensure proper state management
+    // If the new team has exhausted RTM slots, turn OFF RTM automatically
+    if (this.playerForm.isRtmUsed && this.isRtmDisabled()) {
+      this.playerForm.isRtmUsed = false;
+      console.log('RTM automatically turned OFF due to team RTM exhaustion');
+    }
   }
 
   savePlayer() {
@@ -446,6 +516,11 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
   // Shuffle Cards Methods
   setSelectionMode(mode: 'manual' | 'shuffle') {
+    // Prevent switching to shuffle mode if it's not enabled
+    if (mode === 'shuffle' && !this.isShuffleCardsEnabled()) {
+      return;
+    }
+    
     this.selectionMode = mode;
     if (mode === 'manual') {
       this.resetShuffle();
@@ -453,6 +528,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       this.dropdownOpen = false;
       this.selectedTeamSeason = null;
     }
+  }
+
+  isShuffleCardsEnabled(): boolean {
+    return this.currentPlayerLevel?.isRandomTeamSelection === true;
   }
 
   shuffleCards() {
@@ -515,6 +594,13 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.playerForm.teamSeasonCode = selectedCard.teamSeason.code;
     this.hasSelectedCard = true;
     
+    // Reset RTM state when selecting a new team via shuffle to ensure proper state management
+    // If the new team has exhausted RTM slots, turn OFF RTM automatically
+    if (this.playerForm.isRtmUsed && this.isRtmDisabled()) {
+      this.playerForm.isRtmUsed = false;
+      console.log('RTM automatically turned OFF due to team RTM exhaustion (shuffle selection)');
+    }
+    
     console.log('Selected team season:', this.selectedTeamSeason.team.name);
     
     // Add a small delay for visual effect
@@ -537,7 +623,53 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   toggleRtm() {
+    // Prevent toggling if RTM is disabled
+    if (this.isRtmDisabled()) {
+      // Provide user feedback when RTM toggle is disabled
+      if (!this.selectedTeamSeason) {
+        console.warn('Cannot toggle RTM: No team selected');
+      } else if (!this.currentSeason) {
+        console.warn('Cannot toggle RTM: No season data available');
+      } else {
+        const rtmUsed = this.selectedTeamSeason.totalRtmUsed || 0;
+        const maxRtmAllowed = this.currentSeason.maxRtmAllowed || 0;
+        console.warn(`Cannot enable RTM: Team has exhausted all RTM slots (${rtmUsed}/${maxRtmAllowed})`);
+      }
+      return;
+    }
+    
     this.playerForm.isRtmUsed = !this.playerForm.isRtmUsed;
+    console.log(`RTM toggled: ${this.playerForm.isRtmUsed ? 'ON' : 'OFF'}`);
+  }
+
+  isRtmDisabled(): boolean {
+    // RTM is disabled if no team is selected or no season data
+    if (!this.selectedTeamSeason || !this.currentSeason) {
+      return true;
+    }
+
+    // If RTM is currently ON, always allow turning it OFF (never disable when ON)
+    if (this.playerForm.isRtmUsed) {
+      return false;
+    }
+
+    // If RTM is currently OFF, only allow turning it ON if RTM slots are available
+    const rtmUsed = this.selectedTeamSeason.totalRtmUsed || 0;
+    const maxRtmAllowed = this.currentSeason.maxRtmAllowed || 0;
+    
+    // Disable RTM toggle when trying to turn ON RTM but team has exhausted all RTM slots
+    return rtmUsed >= maxRtmAllowed;
+  }
+
+  isRtmExhausted(): boolean {
+    if (!this.selectedTeamSeason || !this.currentSeason) {
+      return false;
+    }
+
+    const rtmUsed = this.selectedTeamSeason.totalRtmUsed || 0;
+    const maxRtmAllowed = this.currentSeason.maxRtmAllowed || 0;
+    
+    return rtmUsed >= maxRtmAllowed;
   }
 
   clearAllPlayerSelections() {
@@ -560,8 +692,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     // Reset shuffle card states
     this.resetShuffle();
     
-    // Reset selection mode to manual
-    this.selectionMode = 'manual';
+    // Reset selection mode to manual if shuffle is not enabled
+    if (this.selectionMode === 'shuffle' && !this.isShuffleCardsEnabled()) {
+      this.selectionMode = 'manual';
+    }
     
     console.log('All player selections cleared');
   }
