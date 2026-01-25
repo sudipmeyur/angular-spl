@@ -26,6 +26,9 @@ body::before {
 .custom-dropdown {
   position: relative;
   width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+  z-index: 9999;
 }
 
 .dropdown-selected {
@@ -38,21 +41,59 @@ body::before {
   align-items: center;
   justify-content: space-between;
   min-height: 31px;
+  position: relative;
+  z-index: 9998;
+  overflow: hidden;
+}
+
+.dropdown-selected .team-option {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  cursor: inherit;
+}
+
+.dropdown-selected .dropdown-arrow {
+  margin-left: 8px;
+  flex-shrink: 0;
 }
 
 .dropdown-options {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
   background: white;
   border: 1px solid #ced4da;
   border-top: none;
   border-radius: 0 0 0.25rem 0.25rem;
   max-height: 200px;
   overflow-y: auto;
-  z-index: 10000;
+  overflow-x: visible;
+  z-index: 99999;
   display: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 100%;
+  width: max-content;
+  white-space: nowrap;
+}
+
+/* Custom scrollbar for dropdown */
+.dropdown-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.dropdown-options::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .dropdown-options.show {
@@ -64,10 +105,38 @@ body::before {
   align-items: center;
   padding: 0.5rem 0.75rem;
   cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  width: 100%;
+  box-sizing: border-box;
+  justify-content: space-between;
 }
 
 .team-option:hover {
   background-color: #f8f9fa;
+}
+
+.team-name-container {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.team-stats {
+  color: #6c757d;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.selected-team-display .team-stats {
+  color: rgba(40, 167, 69, 0.8);
+  font-size: 9px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .team-logo {
@@ -103,6 +172,51 @@ body::before {
 
 .player-section .section-box-inner {
   min-height: 350px;
+  max-height: 350px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.player-section .section-box-inner form {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.player-section .section-box-inner form > .mb-2 {
+  overflow: visible;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.player-section .section-box-inner form > .mb-2:not(:has(.custom-dropdown)) {
+  overflow-x: hidden;
+}
+
+/* Ensure dropdown container has proper overflow handling */
+.player-section .section-box-inner form > .mb-2:has(.custom-dropdown) {
+  overflow: visible;
+  z-index: 10000;
+  position: relative;
+}
+
+/* Custom scrollbar for form section */
+.player-section .section-box-inner::-webkit-scrollbar {
+  width: 6px;
+}
+
+.player-section .section-box-inner::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.player-section .section-box-inner::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.4);
+  border-radius: 3px;
+}
+
+.player-section .section-box-inner::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.6);
 }
 
 #auction-board {
@@ -451,19 +565,26 @@ body::before {
 
 .player-image-container {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   min-height: 250px;
+  max-height: 250px;
+  height: 250px;
+  width: 100%;
   padding: 5px 10px 10px 10px;
+  overflow: hidden;
+  flex: 1 1 250px;
+  box-sizing: border-box;
 }
 
 .player-image {
-  width: 100%;
-  height: 100%;
+  width: calc(100% - 20px);
+  height: calc(100% - 15px);
   object-fit: cover;
   border-radius: 8px;
-  max-height: 250px;
+  position: absolute;
+  top: 5px;
+  left: 10px;
+  z-index: 1;
 }
 
 .player-type-icon {
@@ -477,6 +598,7 @@ body::before {
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
 }
 
 .player-type-icon i {
@@ -487,6 +609,12 @@ body::before {
 .player-info {
   text-align: center;
   padding: 8px 4px;
+  position: relative;
+  z-index: 2;
+  background: rgba(15, 20, 25, 0.8);
+  border-radius: 0 0 8px 8px;
+  flex: 0 0 auto;
+  min-height: 60px;
 }
 
 .player-name {
@@ -553,4 +681,307 @@ body::before {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
   min-width: 45px;
   text-align: right;
+}
+
+/* Shuffle Cards Styles */
+.selection-mode-toggle {
+  margin-bottom: 8px;
+}
+
+.selection-mode-toggle .btn-group {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.selection-mode-toggle .btn {
+  border-radius: 0 !important;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 6px 12px;
+  transition: all 0.3s ease;
+}
+
+.shuffle-cards-container {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 180px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+  gap: 6px;
+  justify-items: center;
+  width: 100%;
+  min-height: 60px;
+  max-height: 60px;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.shuffle-card {
+  width: 50px;
+  height: 60px;
+  perspective: 1000px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.shuffle-card:hover {
+  transform: scale(1.05);
+}
+
+.shuffle-card.shuffling {
+  animation: cardShuffle 0.5s ease-in-out infinite alternate;
+}
+
+.shuffle-card.selected {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.8));
+  z-index: 10;
+  position: relative;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.shuffle-card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 6px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card-front {
+  background: linear-gradient(135deg, #1a2332 0%, #2d3748 50%, #1a2332 100%);
+  color: #FFD700;
+}
+
+.card-back {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #0f1419;
+  transform: rotateY(180deg);
+}
+
+.card-back-design {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-back-design i {
+  font-size: 18px;
+  margin-bottom: 4px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.card-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 8px 8px;
+  border-radius: 4px;
+}
+
+.card-team-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 2px;
+  border: 1px solid #0f1419;
+}
+
+.card-team-name {
+  font-size: 7px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 2px;
+}
+
+.shuffle-controls {
+  margin-top: 0;
+  margin-bottom: 6px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px 0;
+  border-radius: 4px;
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.shuffle-controls .btn {
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.selected-team-display {
+  animation: slideIn 0.5s ease-out;
+  margin-bottom: 0;
+  flex-shrink: 0;
+  position: relative;
+  background: rgba(15, 20, 25, 0.95);
+  border-radius: 4px;
+  padding: 2px;
+  margin-top: 4px;
+  max-height: 40px;
+  overflow: hidden;
+}
+
+.selected-team-display .alert {
+  padding: 4px 6px;
+  margin-bottom: 0;
+  font-size: 9px;
+  border-radius: 4px;
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+  color: #28a745;
+  line-height: 1.2;
+}
+
+.selected-team-display .team-logo {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes cardShuffle {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-5px) rotate(2deg); }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* RTM and Amount Section Styles */
+.rtm-section,
+.amount-section {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.rtm-section .form-label,
+.amount-section .form-label {
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.rtm-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 1;
+}
+
+.rtm-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+  transition: all 0.3s ease;
+  border: 2px solid;
+  min-width: 80px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.rtm-toggle-btn.rtm-on {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  border-color: #28a745;
+  color: white;
+  box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.rtm-toggle-btn.rtm-on:hover {
+  background: linear-gradient(135deg, #218838, #1ea080);
+  border-color: #1e7e34;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  transform: translateY(-1px);
+}
+
+.rtm-toggle-btn.rtm-off {
+  background: linear-gradient(135deg, #6c757d, #5a6268);
+  border-color: #6c757d;
+  color: white;
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);
+}
+
+.rtm-toggle-btn.rtm-off:hover {
+  background: linear-gradient(135deg, #5a6268, #495057);
+  border-color: #545b62;
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+  transform: translateY(-1px);
+}
+
+.rtm-toggle-btn i {
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+/* Amount Input Styles */
+.amount-input {
+  width: 100% !important;
+  max-width: 100%;
+  display: block;
+  text-align: right;
+  padding-right: 8px;
 }

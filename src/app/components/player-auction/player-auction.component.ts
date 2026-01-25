@@ -8,6 +8,12 @@ import { SeasonService } from 'src/app/services/season.service';
 import { Season } from 'src/app/common/season';
 import { PlayerLevel } from 'src/app/common/player-level';
 
+interface ShuffleCard {
+  teamSeason: TeamSeason;
+  isFlipped: boolean;
+  isSelected: boolean;
+}
+
 @Component({
   selector: 'app-player-auction',
   templateUrl: './player-auction.component.html',
@@ -24,11 +30,18 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
   players: Player[] = [];
   teamSeasons: TeamSeason[] = [];
+  selectableTeamSeasons: TeamSeason[] = [];
   
   dropdownOpen = false;
   animationOn = false;
   showEnvelope = false;
   envelopeOpen = false;
+
+  // Shuffle Cards Properties
+  selectionMode: 'manual' | 'shuffle' = 'manual';
+  shuffleCardsList: ShuffleCard[] = [];
+  isShuffling = false;
+  hasSelectedCard = false;
 
   selectedTeamSeason: TeamSeason | null = null;
   selectedPlayerCode: string | null = null;
@@ -37,12 +50,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
   boxPositions = new Map<string, { top: number, left: number }>();
   animationFrames: any[] = [];
-  pollingInterval: any;
   showBudgetTable = false;
   
   playerForm = {
     teamSeasonCode: '',
-    amount: null
+    amount: null,
+    isRtmUsed: false
   };
   
 
@@ -66,6 +79,9 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
           if (hasLevelId) {
             const playerLevelId = +this.route.snapshot.paramMap.get('playerLevelId')!;
 
+            // Clear any existing player selection when navigating to different level
+            this.clearAllPlayerSelections();
+
             this.currentPlayerLevel = this.seasonService.getPlayerLevelById(playerLevelId);
 
             if (this.currentPlayerLevel) {
@@ -85,9 +101,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.pollingInterval) {
-      clearInterval(this.pollingInterval);
-    }
+    
+    this.resetFormData();
+    this.closeEnvelope();
+    this.clearPlayerSelection();
   }
 
   listPlayers(callback?: () => void) {
@@ -111,8 +128,29 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
       data => {
         this.teamSeasons = data;
+        this.selectableTeamSeasons = this.teamSeasons.filter(teamSeason => {
+          if(this.currentSeason){
+            let isSelectable = this.currentSeason.maxPlayersAllowed > (teamSeason.totalPlayer || 0);
+            if(isSelectable && (this.currentPlayerLevel && this.currentPlayerLevel.isFree)){
+              isSelectable = this.currentSeason.maxFreeAllowed > (teamSeason.totalFreeUsed || 0);
+            }
+            return isSelectable;
+          }else{
+            return false;
+          }
+          
+        });
+        this.initializeShuffleCards();
       }
     );
+  }
+
+  initializeShuffleCards() {
+    this.shuffleCardsList = this.selectableTeamSeasons.map(teamSeason => ({
+      teamSeason,
+      isFlipped: false,
+      isSelected: false
+    }));
   }
 
   initializePositions() {
@@ -142,6 +180,16 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   toggleAnimation() {
+
+    if (this.selectedPlayerCode) {
+      if(this.animationOn){
+        this.animationOn = !this.animationOn;
+        this.animationFrames.forEach(frame => cancelAnimationFrame(frame));
+        this.animationFrames = [];
+      } 
+      return;
+    }
+
     this.animationOn = !this.animationOn;
     if (this.animationOn) {
       for (let i = 0; i < this.players.length; i++) {
@@ -178,7 +226,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   choseThis(index: number) {
-    if (this.selectedPlayerCode) return;
+    if (this.selectedPlayerCode || this.animationOn) return;
     
     const player = this.players[index];
     if (!player) return;
@@ -205,7 +253,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     box.setAttribute('data-original-top', originalTop.toString());
     box.setAttribute('data-original-left', originalLeft.toString());
     
-    this.renderer.setStyle(box, 'position', 'fixed');
+    // this.renderer.setStyle(box, 'position', 'fixed');
     this.renderer.setStyle(box, 'z-index', '99999');
     this.renderer.setStyle(stage, 'z-index', '-1');
     
@@ -246,7 +294,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     if (!box || !container) return;
     
     this.renderer.setStyle(box, 'display', 'block');
-    this.renderer.setStyle(box, 'position', 'fixed');
+    // this.renderer.setStyle(box, 'position', 'fixed');
     this.renderer.setStyle(stage, 'z-index', '-1');
     this.renderer.setStyle(box, 'z-index', '99999');
     
@@ -276,7 +324,8 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       this.displayedPlayer = this.selectedPlayer;
       this.playerForm = {
         teamSeasonCode: '',
-        amount: null
+        amount: null,
+        isRtmUsed: false
       };
       this.selectedTeamSeason = null;
     }
@@ -298,7 +347,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmMessage = `Confirm player assignment:\n\nPlayer: ${this.selectedPlayer?.name}\nTeam: ${this.selectedTeamSeason?.team.name}\nAmount: $${this.playerForm.amount}\n\nProceed with save?`;
+    const confirmMessage = `Confirm player assignment:\n\nPlayer: ${this.selectedPlayer?.name}\nTeam: ${this.selectedTeamSeason?.team.name}\nAmount: ₹${this.playerForm.amount}\nRTM: ${this.playerForm.isRtmUsed ? 'YES' : 'NO'}\n\nProceed with save?`;
     
     if (!confirm(confirmMessage)) {
       return;
@@ -307,7 +356,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     const request = new PlayerTeamRequest(
       this.selectedPlayer?.code || '',
       this.playerForm.teamSeasonCode,
-      this.playerForm.amount
+      this.playerForm.amount,
+      '',
+      this.currentPlayerLevel?.isFree,
+      this.playerForm.isRtmUsed
     );
 
     this.playerService.savePlayerTeam(request).subscribe(
@@ -328,7 +380,8 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   resetFormData() {
     this.playerForm = {
       teamSeasonCode: '',
-      amount: null
+      amount: null,
+      isRtmUsed: false
     };
     this.selectedTeamSeason = null;
     this.displayedPlayer = null;
@@ -389,5 +442,127 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     };
     
     requestAnimationFrame(animate);
+  }
+
+  // Shuffle Cards Methods
+  setSelectionMode(mode: 'manual' | 'shuffle') {
+    this.selectionMode = mode;
+    if (mode === 'manual') {
+      this.resetShuffle();
+    } else {
+      this.dropdownOpen = false;
+      this.selectedTeamSeason = null;
+    }
+  }
+
+  shuffleCards() {
+    if (this.isShuffling || this.hasSelectedCard) return;
+    
+    this.isShuffling = true;
+    this.hasSelectedCard = false;
+    
+    // Reset all cards
+    this.shuffleCardsList.forEach(card => {
+      card.isFlipped = false;
+      card.isSelected = false;
+    });
+    
+    // Create a fresh copy and properly shuffle using Fisher-Yates algorithm
+    const shuffledArray = [...this.shuffleCardsList];
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+    }
+    
+    // Update the array reference to trigger change detection
+    this.shuffleCardsList = shuffledArray;
+    
+    // Debug: Log the shuffled order
+    console.log('Shuffled order:', this.shuffleCardsList.map((card, index) => 
+      `${index}: ${card.teamSeason.team.name}`
+    ));
+    
+    // Shuffle animation duration
+    setTimeout(() => {
+      // Generate a truly random index
+      const randomIndex = Math.floor(Math.random() * this.shuffleCardsList.length);
+      console.log('Selected random index:', randomIndex, 'out of', this.shuffleCardsList.length);
+      console.log('Selected team:', this.shuffleCardsList[randomIndex]?.teamSeason?.team?.name);
+      
+      this.selectCard(randomIndex);
+      this.isShuffling = false;
+    }, 2000); // 2 second shuffle animation
+  }
+
+  selectCard(index: number) {
+    if (this.isShuffling || this.hasSelectedCard) return;
+    
+    const selectedCard = this.shuffleCardsList[index];
+    if (!selectedCard) {
+      console.error('No card found at index:', index);
+      return;
+    }
+    
+    console.log('Selecting card at index:', index);
+    console.log('Card details:', selectedCard.teamSeason.team.name);
+    
+    // Flip and select the card
+    selectedCard.isFlipped = true;
+    selectedCard.isSelected = true;
+    
+    // Set the selected team season
+    this.selectedTeamSeason = selectedCard.teamSeason;
+    this.playerForm.teamSeasonCode = selectedCard.teamSeason.code;
+    this.hasSelectedCard = true;
+    
+    console.log('Selected team season:', this.selectedTeamSeason.team.name);
+    
+    // Add a small delay for visual effect
+    setTimeout(() => {
+      // Optional: Add some celebration effect here
+    }, 500);
+  }
+
+  resetShuffle() {
+    // Reset to original order and clear selections
+    this.shuffleCardsList = this.selectableTeamSeasons.map(teamSeason => ({
+      teamSeason,
+      isFlipped: false,
+      isSelected: false
+    }));
+    this.hasSelectedCard = false;
+    this.isShuffling = false;
+    this.selectedTeamSeason = null;
+    this.playerForm.teamSeasonCode = '';
+  }
+
+  toggleRtm() {
+    this.playerForm.isRtmUsed = !this.playerForm.isRtmUsed;
+  }
+
+  clearAllPlayerSelections() {
+    // Clear player selection state
+    this.selectedPlayerCode = null;
+    this.selectedPlayer = null;
+    this.displayedPlayer = null;
+    
+    // Close envelope and reset envelope state
+    this.showEnvelope = false;
+    this.envelopeOpen = false;
+    
+    // Reset form data
+    this.resetFormData();
+    
+    // Clear team selection
+    this.selectedTeamSeason = null;
+    this.dropdownOpen = false;
+    
+    // Reset shuffle card states
+    this.resetShuffle();
+    
+    // Reset selection mode to manual
+    this.selectionMode = 'manual';
+    
+    console.log('All player selections cleared');
   }
 }
