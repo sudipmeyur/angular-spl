@@ -84,7 +84,7 @@ export class PlayerUnsoldComponent implements OnInit {
         // Clear any existing player selection when navigating to different level
         this.clearAllPlayerSelections();
 
-        this.unsoldType = new UnsoldType(1, 'us', 'Unsold', this.currentSeason.minPlayerAmount, false, true);
+        this.unsoldType = new UnsoldType(1, 'us', 'Unsold', this.currentSeason.minPlayerAmount, false, true, true);
 
         if (this.unsoldType) {
           this.unsoldTypeCode = this.unsoldType.code;
@@ -472,7 +472,9 @@ export class PlayerUnsoldComponent implements OnInit {
       '',
       '',
       this.unsoldType?.isFree,
-      this.playerForm.isRtmUsed
+      this.playerForm.isRtmUsed,
+      this.unsoldType?.isUnsold,
+      false
     );
 
     this.playerService.savePlayerTeam(request).subscribe(
@@ -490,43 +492,6 @@ export class PlayerUnsoldComponent implements OnInit {
     );
   }
 
-  saveUnSoldPlayer(){
-    if(!this.selectedPlayer?.code){
-      alert('Please select player');
-      return;
-    }
-
-    const confirmMessage = `Confirm player unsold:\n\nPlayer: ${this.selectedPlayer?.name}\n\nProceed with save?`;
-    
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    const request = new PlayerTeamRequest(
-      this.selectedPlayer?.code || '',
-      '',
-      0,
-      '',
-      this.currentSeasonCode,
-      false,
-      false
-    );
-
-    this.playerService.saveUnsoldPlayer(request).subscribe(
-      response => {
-        alert('Player saved successfully!');
-        this.resetFormData();
-        this.closeEnvelope();
-        this.clearPlayerSelection();
-        this.listPlayers();
-        this.loadTeamSeasons();
-      },
-      error => {
-        alert('Error saving player: ' + error.message);
-      }
-    );
-
-  }
 
   resetFormData() {
     // Set default amount based on player level
@@ -823,7 +788,7 @@ export class PlayerUnsoldComponent implements OnInit {
 
   // Amount input methods
   isAmountReadonly(): boolean {
-    return this.unsoldType?.isFree === true;
+    return this.unsoldType?.isUnsold === true;
   }
 
 }

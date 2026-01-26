@@ -5,9 +5,11 @@ export class PlayerTeamRequest {
     soldAmount: number;
     isFree?: boolean;
     isRtmUsed? : boolean;
+    isUnsold? : boolean;
+    isManager? : boolean;
     seasonCode?: string;
 
-    constructor(playerCode: string, teamSeasonCode: string, soldAmount: number, code?: string, seasonCode?: string,isFree?: boolean, isRtmUsed?: boolean) {
+    constructor(playerCode: string, teamSeasonCode: string, soldAmount: number, code?: string, seasonCode?: string,isFree?: boolean, isRtmUsed?: boolean, isUnsold?: boolean, isManager?:boolean) {
         this.code = code;
         this.playerCode = playerCode;
         this.teamSeasonCode = teamSeasonCode;
@@ -15,5 +17,7 @@ export class PlayerTeamRequest {
         this.isFree = isFree;
         this.isRtmUsed = isRtmUsed;
         this.seasonCode = seasonCode;
+        this.isUnsold = isUnsold;
+        this.isManager = isManager;
     }
 }

@@ -474,7 +474,9 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       '',
       '',
       this.currentPlayerLevel?.isFree,
-      this.playerForm.isRtmUsed
+      this.playerForm.isRtmUsed,
+      false,
+      false
     );
 
     this.playerService.savePlayerTeam(request).subscribe(

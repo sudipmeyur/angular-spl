@@ -10,13 +10,13 @@ import { HttpClientModule } from '@angular/common/http';
 import { PlayerService } from './services/player.service';
 import { SeasonService } from './services/season.service';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
-
 import { Routes,RouterModule } from '@angular/router';
 import { PlayerUnsoldComponent } from './components/player-unsold/player-unsold.component';
 
 const routes:Routes = [
   {path:'auction/:playerLevelId',component: PlayerAuctionComponent},
   {path:'auction/',component: PlayerAuctionComponent},
+  {path:'unsold',component: PlayerUnsoldComponent},
   {path:'team-squad/:id',component: TeamSquadComponent},
   {path:'dashboard',component: DashboardComponent},
   {path:'',redirectTo:'/dashboard', pathMatch:'full'},
