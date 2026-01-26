@@ -1,0 +1,247 @@
+<div class="container-fluid">
+  <div class="row section-box">
+    <div class="col-md-8">
+      <div class="section-box-inner border border-warning h-100 position-relative" style="border-width: 2px !important;">
+        <div id="auction-board">
+          <div *ngFor="let player of players; let i = index" 
+               [id]="'player-' + player.code" 
+               (click)="choseThis(i)" 
+               class="auction-box border"
+               [style.top.px]="boxPositions.get(player.code)?.top"
+               [style.left.px]="boxPositions.get(player.code)?.left"></div>
+        </div>
+        <div class="h-10 position-absolute bottom-0 start-50 translate-middle-x">
+          <button type="button" (click)="toggleAnimation()" class="btn btn-secondary">
+            <i [class]="animationOn ? 'fas fa-pause' : 'fas fa-play'"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div id="stage" class="section-box-inner border border-warning h-100" style="border-width: 2px !important;">
+        <div id="stage-inner">
+          <div class="envelop-member" id="wrapper" [style.display]="showEnvelope ? 'block' : 'none'">
+            <div (click)="openEnvelop($event)" class="envelop-member envelope" [class.open]="envelopeOpen">
+              <div class="envelop-member flap front"></div>
+              <div class="envelop-member flap top"></div>
+              <div class="envelop-member letter">
+                <a href="#" (click)="populatePlayerData(); $event.preventDefault()" style="color: #333; text-decoration: none;">
+                  {{selectedPlayer?.name}}
+                </a>
+              </div>
+            </div>
+            <button (click)="sendBack()" id="back" class="btn btn-outline-danger btn-sm rounded-circle">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row section-box player-section">
+    <div class="col-md-3">
+      <div class="section-box-inner border border-warning h-100 d-flex flex-column p-2" style="border-width: 2px !important;">
+        <div class="player-image-container">
+          <img [src]="displayedPlayer?.imageUrl || 'assets/images/placeholder.png'" alt="Player Image" class="img-fluid player-image">
+          <div class="player-type-icon position-absolute">
+            <i class="fas fa-baseball-bat" title="Player Type"></i>
+          </div>
+        </div>
+        <div class="player-info">
+          <h6 class="player-name mb-1">{{displayedPlayer?.name || 'Player Name'}}</h6>
+          <p class="player-description mb-0">{{displayedPlayer?.description || 'Player description will appear here'}}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-5">
+      <div class="section-box-inner border border-warning h-100 p-2" style="border-width: 2px !important;">
+        <form>
+          <div class="mb-2" style="overflow: visible; position: relative; z-index: 9999;">
+            <label class="form-label">Team Season</label>
+            
+            <!-- Selection Mode Toggle -->
+            <div class="selection-mode-toggle mb-2">
+              <div class="btn-group w-100" role="group">
+                <button type="button" 
+                        class="btn btn-sm" 
+                        [class.btn-warning]="selectionMode === 'manual'"
+                        [class.btn-outline-warning]="selectionMode !== 'manual'"
+                        (click)="setSelectionMode('manual')">
+                  <i class="fas fa-list me-1"></i>Manual
+                </button>
+                <button type="button" 
+                        class="btn btn-sm" 
+                        [class.btn-warning]="selectionMode === 'shuffle'"
+                        [class.btn-outline-warning]="selectionMode !== 'shuffle'"
+                        [class.btn-disabled]="!isShuffleCardsEnabled()"
+                        [disabled]="!isShuffleCardsEnabled()"
+                        (click)="setSelectionMode('shuffle')">
+                  <i class="fas fa-random me-1"></i>Shuffle Cards
+                </button>
+              </div>
+            </div>
+
+            <!-- Manual Selection Dropdown -->
+            <div *ngIf="selectionMode === 'manual'" class="custom-dropdown">
+              <div class="dropdown-selected" (click)="toggleDropdown()">
+                <div *ngIf="selectedTeamSeason; else placeholder" class="team-option" style="padding: 0; width: 100%;">
+                  <div class="team-name-container">
+                    <img [src]="selectedTeamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
+                    <span>{{selectedTeamSeason.team.name}}</span>
+                  </div>
+                  <small class="team-stats">
+                    [rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
+                     free={{selectedTeamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
+                     player={{selectedTeamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
+                  </small>
+                </div>
+                <ng-template #placeholder>
+                  <span>Select team season</span>
+                </ng-template>
+                <i class="fas fa-chevron-down dropdown-arrow"></i>
+              </div>
+              <div class="dropdown-options" [class.show]="dropdownOpen">
+                <div *ngFor="let teamSeason of selectableTeamSeasons" 
+                     class="team-option" 
+                     (click)="selectTeamSeason(teamSeason)">
+                  <div class="team-name-container">
+                    <img [src]="teamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
+                    <span>{{teamSeason.team.name}}</span>
+                  </div>
+                  <small class="team-stats">
+                    [rtm={{teamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
+                     free={{teamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
+                     player={{teamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
+                  </small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Shuffle Cards Selection -->
+            <div *ngIf="selectionMode === 'shuffle'" class="shuffle-cards-container">
+              <div class="cards-grid">
+                <div *ngFor="let card of shuffleCardsList; let i = index" 
+                     class="shuffle-card" 
+                     [class.flipped]="card.isFlipped"
+                     [class.selected]="card.isSelected"
+                     [class.shuffling]="isShuffling"
+                     [style.animation-delay.ms]="i * 100"
+                     (click)="selectCard(i)">
+                  <div class="card-inner">
+                    <div class="card-front">
+                      <div class="card-back-design">
+                        <i class="fas fa-question"></i>
+                        <div class="card-pattern"></div>
+                      </div>
+                    </div>
+                    <div class="card-back">
+                      <img [src]="card.teamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" 
+                           alt="Team Logo" class="card-team-logo">
+                      <span class="card-team-name">{{card.teamSeason.team.name}}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="shuffle-controls text-center">
+                <button type="button" 
+                        class="btn btn-warning btn-sm me-2" 
+                        (click)="shuffleCards()"
+                        [disabled]="isShuffling || hasSelectedCard">
+                  <i class="fas fa-shuffle me-1"></i>
+                  {{isShuffling ? 'Shuffling...' : 'Shuffle & Pick'}}
+                </button>
+                <button type="button" 
+                        class="btn btn-outline-secondary btn-sm" 
+                        (click)="resetShuffle()"
+                        *ngIf="hasSelectedCard">
+                  <i class="fas fa-redo me-1"></i>Reset
+                </button>
+              </div>
+              
+              <div *ngIf="selectedTeamSeason && hasSelectedCard" class="selected-team-display">
+                <div class="alert alert-success d-flex align-items-center">
+                  <img [src]="selectedTeamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" 
+                       alt="Team Logo" class="team-logo me-2">
+                  <span><strong>Selected:</strong> {{selectedTeamSeason.team.name}}</span>
+                  <small class="team-stats ms-auto">
+                    [rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
+                     free={{selectedTeamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
+                     player={{selectedTeamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mb-2">
+            <div class="row">
+              <div class="col-6">
+                <div class="rtm-section">
+                  <label class="form-label">RTM</label>
+                  <div class="rtm-toggle-container">
+                    <button type="button" 
+                            class="btn btn-sm rtm-toggle-btn" 
+                            [class.rtm-on]="playerForm.isRtmUsed"
+                            [class.rtm-off]="!playerForm.isRtmUsed"
+                            [class.rtm-disabled]="isRtmDisabled()"
+                            [disabled]="isRtmDisabled()"
+                            [title]="isRtmExhausted() && selectedTeamSeason ? 'RTM exhausted for ' + selectedTeamSeason.team.name : null"
+                            (click)="toggleRtm()">
+                      <i class="fas" [class.fa-toggle-on]="playerForm.isRtmUsed" [class.fa-toggle-off]="!playerForm.isRtmUsed"></i>
+                      <span class="ms-1">{{playerForm.isRtmUsed ? 'ON' : 'OFF'}}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="amount-section">
+                  <label class="form-label">Amount</label>
+                  <div class="amount-input-container">
+                    <input type="number" 
+                           class="form-control form-control-sm amount-input" 
+                           [class.readonly-input]="isAmountReadonly()"
+                           [(ngModel)]="playerForm.amount" 
+                           name="amount" 
+                           placeholder="Enter amount" 
+                           step="0.5" 
+                           max="999.99"
+                           [readonly]="isAmountReadonly()">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="text-end">
+            <button type="button" (click)="saveSoldPlayer()" class="btn btn-secondary btn-sm me-2">Sold</button>
+            <button type="button" (click)="saveUnSoldPlayer()" class="btn btn-secondary btn-sm me-2">Unsold</button>
+            <button type="button" (click)="cancelSelection()" class="btn btn-secondary btn-sm">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="section-box-inner border border-warning h-100 p-2" style="border-width: 2px !important;">
+        <h6 class="mb-3 text-warning"><i class="fas fa-chart-bar"></i> Team Budget Overview</h6>
+        <div class="team-budget-list">
+          <div *ngFor="let teamSeason of teamSeasons" class="team-budget-item mb-2">
+            <div class="d-flex align-items-center mb-2">
+              <img [src]="teamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" 
+                   alt="Team Logo" class="team-logo-medium me-3">
+              <span class="team-name-large">{{teamSeason.team.name}}</span>
+              <span class="ms-auto percentage-large">{{getProgressPercentage(teamSeason) | number:'1.0-0'}}%</span>
+            </div>
+            <div class="progress" style="height: 16px; border-radius: 8px;">
+              <div *ngFor="let playerLevel of teamSeason.teamSeasonPlayerLevels; let i = index" 
+                   class="progress-bar" 
+                   [style.background]="getPlayerLevelColor(playerLevel.playerLevel.code)"
+                   [style.width.%]="getPlayerLevelPercentage(teamSeason, playerLevel)"
+                   [title]="playerLevel.playerLevel.code.toUpperCase() + ': ₹' + (playerLevel.totalAmountSpent | number)">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

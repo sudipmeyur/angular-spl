@@ -12,6 +12,7 @@ import { SeasonService } from './services/season.service';
 import { DashboardComponent } from './components/dashboard/dashboard.component';
 
 import { Routes,RouterModule } from '@angular/router';
+import { PlayerUnsoldComponent } from './components/player-unsold/player-unsold.component';
 
 const routes:Routes = [
   {path:'auction/:playerLevelId',component: PlayerAuctionComponent},
@@ -28,7 +29,8 @@ const routes:Routes = [
     AppComponent,
     PlayerAuctionComponent,
     TeamSquadComponent,
-    DashboardComponent
+    DashboardComponent,
+    PlayerUnsoldComponent
   ],
   imports: [
     RouterModule.forRoot(routes),

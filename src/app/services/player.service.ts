@@ -14,6 +14,7 @@ import { PlayerLevel } from '../common/player-level';
 })
 export class PlayerService {
   
+  
 
   
 
@@ -27,6 +28,12 @@ export class PlayerService {
 
   getPlayers(playerLevelId: number, seasonId: number): Observable<Player[]>{
     return this.httpClient.get<GetResponse>(`${PLAYERS_URL}/available?seasonId=${seasonId}&playerLevelId=${playerLevelId}`).pipe(
+      map(response => response.data.items)  
+    );
+  }
+
+  getUnsoldPlayers(seasonId: number) {
+    return this.httpClient.get<GetResponse>(`${PLAYERS_URL}/unsold?seasonId=${seasonId}`).pipe(
       map(response => response.data.items)  
     );
   }
