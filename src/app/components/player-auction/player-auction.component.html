@@ -197,27 +197,15 @@
                 <div class="amount-section">
                   <label class="form-label">Amount</label>
                   <div class="amount-input-container">
-                    <button type="button" 
-                            class="btn btn-outline-secondary btn-sm amount-btn" 
-                            (click)="decrementAmount()"
-                            [disabled]="isAmountReadonly()">
-                      <i class="fas fa-minus"></i>
-                    </button>
                     <input type="number" 
                            class="form-control form-control-sm amount-input" 
                            [class.readonly-input]="isAmountReadonly()"
                            [(ngModel)]="playerForm.amount" 
                            name="amount" 
                            placeholder="Enter amount" 
-                           step="0.01" 
+                           step="0.5" 
                            max="999.99"
                            [readonly]="isAmountReadonly()">
-                    <button type="button" 
-                            class="btn btn-outline-secondary btn-sm amount-btn" 
-                            (click)="incrementAmount()"
-                            [disabled]="isAmountReadonly()">
-                      <i class="fas fa-plus"></i>
-                    </button>
                   </div>
                 </div>
               </div>

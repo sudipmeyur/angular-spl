@@ -7,7 +7,6 @@ import { ActivatedRoute } from '@angular/router';
 import { SeasonService } from 'src/app/services/season.service';
 import { Season } from 'src/app/common/season';
 import { PlayerLevel } from 'src/app/common/player-level';
-import { AMOUNT_INCREMENT_STEP } from 'src/app/config/constants';
 
 interface ShuffleCard {
   teamSeason: TeamSeason;
@@ -21,10 +20,6 @@ interface ShuffleCard {
   styleUrls: ['./player-auction.component.css']
 })
 export class PlayerAuctionComponent implements OnInit, OnDestroy {
-
-  // Amount increment configuration
-  amountIncrementStep = AMOUNT_INCREMENT_STEP;
-
 
   currentPlayerLevelCode: string = 'l1';
   currentPlayerLevelId: number = 1;
@@ -831,46 +826,5 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   // Amount input methods
   isAmountReadonly(): boolean {
     return this.currentPlayerLevel?.isFree === true;
-  }
-
-  incrementAmount(): void {
-    if (this.isAmountReadonly()) {
-      return;
-    }
-
-    const currentAmount = this.playerForm.amount || 0;
-    const newAmount = currentAmount + this.amountIncrementStep;
-    
-    // Validate the increment step
-    if (this.validateAmountIncrement(newAmount)) {
-      this.playerForm.amount = Math.round(newAmount * 100) / 100; // Round to 2 decimal places
-      console.log('Amount incremented to:', this.playerForm.amount);
-    }
-  }
-
-  decrementAmount(): void {
-    if (this.isAmountReadonly()) {
-      return;
-    }
-
-    const currentAmount = this.playerForm.amount || 0;
-    const newAmount = Math.max(0, currentAmount - this.amountIncrementStep); // Don't go below 0
-    
-    // Validate the increment step
-    if (this.validateAmountIncrement(newAmount)) {
-      this.playerForm.amount = Math.round(newAmount * 100) / 100; // Round to 2 decimal places
-      console.log('Amount decremented to:', this.playerForm.amount);
-    }
-  }
-
-  private validateAmountIncrement(amount: number): boolean {
-    // Ensure amount doesn't exceed maximum allowed
-    if (amount > 999.99) {
-      console.warn('Amount cannot exceed 999.99');
-      return false;
-    }
-    
-    // Additional validation can be added here if needed
-    return true;
   }
 }
