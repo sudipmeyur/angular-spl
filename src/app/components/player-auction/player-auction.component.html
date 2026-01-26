@@ -196,13 +196,36 @@
               <div class="col-6">
                 <div class="amount-section">
                   <label class="form-label">Amount</label>
-                  <input type="number" class="form-control form-control-sm amount-input" [(ngModel)]="playerForm.amount" name="amount" placeholder="Enter amount" step="0.01" max="999.99">
+                  <div class="amount-input-container">
+                    <button type="button" 
+                            class="btn btn-outline-secondary btn-sm amount-btn" 
+                            (click)="decrementAmount()"
+                            [disabled]="isAmountReadonly()">
+                      <i class="fas fa-minus"></i>
+                    </button>
+                    <input type="number" 
+                           class="form-control form-control-sm amount-input" 
+                           [class.readonly-input]="isAmountReadonly()"
+                           [(ngModel)]="playerForm.amount" 
+                           name="amount" 
+                           placeholder="Enter amount" 
+                           step="0.01" 
+                           max="999.99"
+                           [readonly]="isAmountReadonly()">
+                    <button type="button" 
+                            class="btn btn-outline-secondary btn-sm amount-btn" 
+                            (click)="incrementAmount()"
+                            [disabled]="isAmountReadonly()">
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
           <div class="text-end">
-            <button type="button" (click)="savePlayer()" class="btn btn-secondary btn-sm me-2">Save Player</button>
+            <button type="button" (click)="saveSoldPlayer()" class="btn btn-secondary btn-sm me-2">Sold</button>
+            <button type="button" (click)="saveUnSoldPlayer()" class="btn btn-secondary btn-sm me-2">Unsold</button>
             <button type="button" (click)="cancelSelection()" class="btn btn-secondary btn-sm">Cancel</button>
           </div>
         </form>

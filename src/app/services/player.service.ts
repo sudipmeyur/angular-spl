@@ -13,6 +13,7 @@ import { PlayerLevel } from '../common/player-level';
   providedIn: 'root'
 })
 export class PlayerService {
+  
 
   
 
@@ -38,6 +39,10 @@ export class PlayerService {
 
   savePlayerTeam(request: PlayerTeamRequest): Observable<any> {
     return this.httpClient.post(PLAYER_TEAMS_URL, request);
+  }
+
+  saveUnsoldPlayer(request: PlayerTeamRequest): Observable<any> {
+    return this.httpClient.post(`${PLAYERS_URL}/unsold`, request);
   }
 
   getTeamSquad(teamSeasonId: number): Observable<TeamSeason> {

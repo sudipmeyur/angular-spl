@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 import { AppComponent } from './app.component';
 import { PlayerAuctionComponent } from './components/player-auction/player-auction.component';
@@ -32,6 +33,7 @@ const routes:Routes = [
   imports: [
     RouterModule.forRoot(routes),
     BrowserModule,
+    CommonModule,
     HttpClientModule,
     FormsModule
   ],

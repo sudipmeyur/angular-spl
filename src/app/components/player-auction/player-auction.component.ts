@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { SeasonService } from 'src/app/services/season.service';
 import { Season } from 'src/app/common/season';
 import { PlayerLevel } from 'src/app/common/player-level';
+import { AMOUNT_INCREMENT_STEP } from 'src/app/config/constants';
 
 interface ShuffleCard {
   teamSeason: TeamSeason;
@@ -20,6 +21,10 @@ interface ShuffleCard {
   styleUrls: ['./player-auction.component.css']
 })
 export class PlayerAuctionComponent implements OnInit, OnDestroy {
+
+  // Amount increment configuration
+  amountIncrementStep = AMOUNT_INCREMENT_STEP;
+
 
   currentPlayerLevelCode: string = 'l1';
   currentPlayerLevelId: number = 1;
@@ -52,7 +57,11 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   animationFrames: any[] = [];
   showBudgetTable = false;
   
-  playerForm = {
+  playerForm: {
+    teamSeasonCode: string;
+    amount: number | null;
+    isRtmUsed: boolean;
+  } = {
     teamSeasonCode: '',
     amount: null,
     isRtmUsed: false
@@ -87,6 +96,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
             if (this.currentPlayerLevel) {
               this.currentPlayerLevelCode = this.currentPlayerLevel.code;
               this.currentPlayerLevelId = this.currentPlayerLevel.id;
+              this.playerForm.amount = this.currentPlayerLevel.baseAmount || 0;
               console.log('Player level changed to:', this.currentPlayerLevelCode, 'isFree:', this.currentPlayerLevel.isFree);
 
               // Ensure selection mode is valid for current player level
@@ -159,12 +169,19 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     console.log('Current player level:', this.currentPlayerLevel?.code, 'isFree:', this.currentPlayerLevel?.isFree);
     console.log('Current season:', this.currentSeason?.code);
     console.log('Total team seasons available:', this.teamSeasons?.length || 0);
+    console.log('Shuffle cards enabled:', this.isShuffleCardsEnabled());
     
     // If team seasons haven't been loaded yet, initialize empty array and return
     if (!this.teamSeasons || this.teamSeasons.length === 0) {
       console.log('Team seasons not loaded yet, initializing empty selectable teams');
       this.selectableTeamSeasons = [];
-      this.initializeShuffleCards();
+      // Only initialize shuffle cards if shuffle mode is enabled
+      if (this.isShuffleCardsEnabled()) {
+        this.initializeShuffleCards();
+      } else {
+        console.log('Skipping shuffle cards initialization - shuffle mode disabled');
+        this.clearShuffleCardData();
+      }
       return;
     }
     
@@ -205,7 +222,15 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     }
     
     console.log('=== REBUILD COMPLETE ===');
-    this.initializeShuffleCards();
+    
+    // Only initialize shuffle cards if shuffle mode is enabled
+    if (this.isShuffleCardsEnabled()) {
+      console.log('Initializing shuffle cards for', this.selectableTeamSeasons.length, 'teams');
+      this.initializeShuffleCards();
+    } else {
+      console.log('Skipping shuffle cards initialization - shuffle mode disabled');
+      this.clearShuffleCardData();
+    }
   }
 
   initializeShuffleCards() {
@@ -214,6 +239,13 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       isFlipped: false,
       isSelected: false
     }));
+  }
+
+  clearShuffleCardData() {
+    console.log('Clearing shuffle card data - shuffle mode disabled');
+    this.shuffleCardsList = [];
+    this.isShuffling = false;
+    this.hasSelectedCard = false;
   }
 
   initializePositions() {
@@ -344,6 +376,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.selectedPlayerCode = null;
     this.selectedPlayer = null;
   }
+  
 
   sendBack() {
     if (!this.selectedPlayerCode) return;
@@ -385,12 +418,28 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   populatePlayerData() {
     if (this.selectedPlayer) {
       this.displayedPlayer = this.selectedPlayer;
+      
+      // Set default amount based on player level
+      let defaultAmount: number | null = null;
+      
+      if (this.currentPlayerLevel) {
+        if (this.currentPlayerLevel.isFree) {
+          // If player level is free, amount should be 0
+          defaultAmount = 0;
+        } else {
+          // Set default amount to player level's base amount
+          defaultAmount = this.currentPlayerLevel.baseAmount || null;
+        }
+      }
+      
       this.playerForm = {
         teamSeasonCode: '',
-        amount: null,
+        amount: defaultAmount,
         isRtmUsed: false
       };
       this.selectedTeamSeason = null;
+      
+      console.log('Player data populated with default amount:', defaultAmount, 'isFree:', this.currentPlayerLevel?.isFree);
     }
   }
 
@@ -411,7 +460,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     }
   }
 
-  savePlayer() {
+  saveSoldPlayer() {
     if (!this.playerForm.teamSeasonCode || !this.playerForm.amount) {
       alert('Please select team season and enter amount');
       return;
@@ -427,6 +476,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       this.selectedPlayer?.code || '',
       this.playerForm.teamSeasonCode,
       this.playerForm.amount,
+      '',
       '',
       this.currentPlayerLevel?.isFree,
       this.playerForm.isRtmUsed
@@ -447,14 +497,67 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     );
   }
 
+  saveUnSoldPlayer(){
+    if(!this.selectedPlayer?.code){
+      alert('Please select player');
+      return;
+    }
+
+    const confirmMessage = `Confirm player unsold:\n\nPlayer: ${this.selectedPlayer?.name}\n\nProceed with save?`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    const request = new PlayerTeamRequest(
+      this.selectedPlayer?.code || '',
+      '',
+      0,
+      '',
+      this.currentSeasonCode,
+      false,
+      false
+    );
+
+    this.playerService.saveUnsoldPlayer(request).subscribe(
+      response => {
+        alert('Player saved successfully!');
+        this.resetFormData();
+        this.closeEnvelope();
+        this.clearPlayerSelection();
+        this.listPlayers();
+        this.loadTeamSeasons();
+      },
+      error => {
+        alert('Error saving player: ' + error.message);
+      }
+    );
+
+  }
+
   resetFormData() {
+    // Set default amount based on player level
+    let defaultAmount: number | null = null;
+    
+    if (this.currentPlayerLevel) {
+      if (this.currentPlayerLevel.isFree) {
+        // If player level is free, amount should be 0
+        defaultAmount = 0;
+      } else {
+        // Set default amount to player level's base amount
+        defaultAmount = this.currentPlayerLevel.baseAmount || null;
+      }
+    }
+    
     this.playerForm = {
       teamSeasonCode: '',
-      amount: null,
+      amount: defaultAmount,
       isRtmUsed: false
     };
     this.selectedTeamSeason = null;
     this.displayedPlayer = null;
+    
+    console.log('Form data reset with default amount:', defaultAmount);
   }
 
   cancelSelection() {
@@ -525,8 +628,11 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     if (mode === 'manual') {
       this.resetShuffle();
     } else {
-      this.dropdownOpen = false;
-      this.selectedTeamSeason = null;
+      // Only process shuffle cards if shuffle mode is enabled
+      if (this.isShuffleCardsEnabled()) {
+        this.dropdownOpen = false;
+        this.selectedTeamSeason = null;
+      }
     }
   }
 
@@ -535,6 +641,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   shuffleCards() {
+    // Skip processing if shuffle cards are not enabled
+    if (!this.isShuffleCardsEnabled()) {
+      console.log('Shuffle cards processing skipped - shuffle mode disabled');
+      return;
+    }
+    
     if (this.isShuffling || this.hasSelectedCard) return;
     
     this.isShuffling = true;
@@ -574,6 +686,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   selectCard(index: number) {
+    // Skip processing if shuffle cards are not enabled
+    if (!this.isShuffleCardsEnabled()) {
+      console.log('Card selection processing skipped - shuffle mode disabled');
+      return;
+    }
+    
     if (this.isShuffling || this.hasSelectedCard) return;
     
     const selectedCard = this.shuffleCardsList[index];
@@ -610,6 +728,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   resetShuffle() {
+    // Skip processing if shuffle cards are not enabled
+    if (!this.isShuffleCardsEnabled()) {
+      console.log('Shuffle reset processing skipped - shuffle mode disabled');
+      return;
+    }
+    
     // Reset to original order and clear selections
     this.shuffleCardsList = this.selectableTeamSeasons.map(teamSeason => ({
       teamSeason,
@@ -689,8 +813,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.selectedTeamSeason = null;
     this.dropdownOpen = false;
     
-    // Reset shuffle card states
-    this.resetShuffle();
+    // Reset shuffle card states only if shuffle mode is enabled
+    if (this.isShuffleCardsEnabled()) {
+      this.resetShuffle();
+    } else {
+      console.log('Skipping shuffle reset - shuffle mode disabled');
+    }
     
     // Reset selection mode to manual if shuffle is not enabled
     if (this.selectionMode === 'shuffle' && !this.isShuffleCardsEnabled()) {
@@ -698,5 +826,51 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     }
     
     console.log('All player selections cleared');
+  }
+
+  // Amount input methods
+  isAmountReadonly(): boolean {
+    return this.currentPlayerLevel?.isFree === true;
+  }
+
+  incrementAmount(): void {
+    if (this.isAmountReadonly()) {
+      return;
+    }
+
+    const currentAmount = this.playerForm.amount || 0;
+    const newAmount = currentAmount + this.amountIncrementStep;
+    
+    // Validate the increment step
+    if (this.validateAmountIncrement(newAmount)) {
+      this.playerForm.amount = Math.round(newAmount * 100) / 100; // Round to 2 decimal places
+      console.log('Amount incremented to:', this.playerForm.amount);
+    }
+  }
+
+  decrementAmount(): void {
+    if (this.isAmountReadonly()) {
+      return;
+    }
+
+    const currentAmount = this.playerForm.amount || 0;
+    const newAmount = Math.max(0, currentAmount - this.amountIncrementStep); // Don't go below 0
+    
+    // Validate the increment step
+    if (this.validateAmountIncrement(newAmount)) {
+      this.playerForm.amount = Math.round(newAmount * 100) / 100; // Round to 2 decimal places
+      console.log('Amount decremented to:', this.playerForm.amount);
+    }
+  }
+
+  private validateAmountIncrement(amount: number): boolean {
+    // Ensure amount doesn't exceed maximum allowed
+    if (amount > 999.99) {
+      console.warn('Amount cannot exceed 999.99');
+      return false;
+    }
+    
+    // Additional validation can be added here if needed
+    return true;
   }
 }
