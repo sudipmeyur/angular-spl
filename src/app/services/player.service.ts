@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import { PLAYERS_URL, PLAYER_TEAMS_URL, TEAM_SEASONS_URL, SEASONS_URL, PLAYER_LEVELS_URL } from '../config/constants';
 import { Season } from '../common/season';
 import { PlayerLevel } from '../common/player-level';
+import { PlayerTeamInfo } from '../common/player-team-info';
 
 @Injectable({
   providedIn: 'root'
@@ -32,7 +33,7 @@ export class PlayerService {
     );
   }
 
-  getUnsoldPlayers(seasonId: number) {
+  getUnsoldPlayers(seasonId: number): Observable<Player[]>{
     return this.httpClient.get<GetResponse>(`${PLAYERS_URL}/unsold?seasonId=${seasonId}`).pipe(
       map(response => response.data.items)  
     );
@@ -60,6 +61,12 @@ export class PlayerService {
 
   getPlayerLevels(): Observable<PlayerLevel[]>{
     return this.httpClient.get<PlayerLevesResponse>(`${PLAYER_LEVELS_URL}`).pipe(
+      map(response => response.data.items)  
+    );
+  }
+
+  getAuctionResultPlayers(seasonId: number) : Observable<PlayerTeamInfo[]>{
+    return this.httpClient.get<PlayerTeamInfosResponse>(`${PLAYERS_URL}/auction-result?seasonId=${seasonId}`).pipe(
       map(response => response.data.items)  
     );
   }
@@ -93,5 +100,11 @@ interface TeamSeasonResponse {
 interface PlayerLevesResponse {
   data: {
     items: PlayerLevel[];
+  }
+}
+
+interface PlayerTeamInfosResponse {
+  data: {
+    items: PlayerTeamInfo[];
   }
 }

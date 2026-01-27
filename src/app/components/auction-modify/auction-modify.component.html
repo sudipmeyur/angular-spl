@@ -1,0 +1,369 @@
+<div class="auction-modify-container">
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Loading auction data...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-banner" *ngIf="loadingError && !isLoading">
+    <div class="error-content">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{loadingError}}</span>
+      <button class="btn btn-sm btn-outline-danger" (click)="loadData()">
+        <i class="fas fa-redo"></i> Retry
+      </button>
+    </div>
+  </div>
+
+  <!-- Enhanced Tab Navigation -->
+  <div class="auction-modify-header" *ngIf="!isLoading">
+    <div class="level-tabs-container">
+      <div class="level-tab" 
+           *ngFor="let level of playerLevels" 
+           [class.active]="activeTab === level.code"
+           (click)="switchTab(level.code)">
+        <div class="tab-content">
+          <span class="level-name">{{level.code.toUpperCase()}}</span>
+          <div class="tab-counters">
+            <span class="sold-count" title="Sold Players">{{getSoldCount(level.code)}}</span>
+            <span class="unsold-count" title="Unsold Players">{{getUnsoldCount(level.code)}}</span>
+          </div>
+        </div>
+        <div class="tab-indicator"></div>
+      </div>
+      <div class="level-tab unsold-tab" 
+           [class.active]="activeTab === 'unsold'"
+           (click)="switchTab('unsold')">
+        <div class="tab-content">
+          <span class="level-name">UNSOLD</span>
+          <div class="tab-counters">
+            <span class="total-unsold" title="Total Unsold">{{getTotalUnsoldCount()}}</span>
+          </div>
+        </div>
+        <div class="tab-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Players Grid Section -->
+  <div class="players-grid-container" *ngIf="!isLoading">
+    <div class="grid-controls">
+      <div class="search-filter">
+        <input type="text" class="form-control" placeholder="Search players..." 
+               [(ngModel)]="searchTerm" (input)="filterPlayers()">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      <div class="pagination-controls">
+        <select class="form-control items-per-page" [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
+          <option value="10">10 per page</option>
+          <option value="20">20 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+      </div>
+      <div class="view-toggle">
+        <button class="btn btn-sm" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')">
+          <i class="fas fa-th"></i>
+        </button>
+        <button class="btn btn-sm" [class.active]="viewMode === 'list'" (click)="setViewMode('list')">
+          <i class="fas fa-list"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="results-summary" *ngIf="filteredPlayers.length > 0">
+      <span class="results-text">
+        Showing {{((currentPage - 1) * itemsPerPage) + 1}} - {{getEndIndex()}} 
+        of {{filteredPlayers.length}} players
+      </span>
+    </div>
+
+    <!-- Grid View -->
+    <div class="players-grid" *ngIf="viewMode === 'grid'">
+      <div class="player-card" 
+           *ngFor="let player of paginatedPlayers" 
+           [class.selected]="selectedPlayer && selectedPlayer.player.id === player.player.id"
+           (click)="selectPlayer(player)">
+        <div class="card-header">
+          <img [src]="player.player.imageUrl || 'assets/images/placeholder.png'" 
+               alt="{{player.player.name}}" class="player-avatar">
+          <div class="player-status-badge" [class]="getPlayerStatusClass(player)">
+            {{getPlayerStatus(player)}}
+          </div>
+        </div>
+        <div class="card-body">
+          <h6 class="player-name">{{player.player.name}}</h6>
+          <p class="player-code">{{player.player.code}}</p>
+          <div class="player-details" *ngIf="isPlayerSold(player)">
+            <div class="team-info">
+              <img [src]="getPlayerTeam(player)?.logoUrl || 'assets/images/placeholder.png'" class="team-logo-small">
+              <span>{{getPlayerTeam(player)?.name || 'Unknown Team'}}</span>
+            </div>
+            <div class="amount-info">
+              <span class="amount">₹{{getPlayerAmount(player)}}</span>
+              <span class="rtm-badge" *ngIf="isRtmUsed(player)">RTM</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-sm" 
+                  [class.btn-primary]="getPlayerStatus(player) !== 'Available'"
+                  [class.btn-info]="getPlayerStatus(player) === 'Available'"
+                  (click)="editPlayer(player, $event)">
+            <i [class]="getPlayerStatus(player) === 'Available' ? 'fas fa-eye' : 'fas fa-edit'"></i>
+            {{getPlayerStatus(player) === 'Available' ? 'View' : 'Edit'}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div class="players-table-container" *ngIf="viewMode === 'list'">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Code</th>
+            <th>Status</th>
+            <th>Team</th>
+            <th>Amount</th>
+            <th>RTM</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let player of paginatedPlayers" 
+              [class.selected]="selectedPlayer && selectedPlayer.player.id === player.player.id">
+            <td>
+              <div class="player-info-cell">
+                <img [src]="player.player.imageUrl || 'assets/images/placeholder.png'" 
+                     class="player-avatar-small">
+                <span>{{player.player.name}}</span>
+              </div>
+            </td>
+            <td>{{player.player.code}}</td>
+            <td>
+              <span class="status-badge" [class]="getPlayerStatusClass(player)">
+                {{getPlayerStatus(player)}}
+              </span>
+            </td>
+            <td>
+              <div class="team-cell" *ngIf="isPlayerSold(player)">
+                <img [src]="getPlayerTeam(player)?.logoUrl || 'assets/images/placeholder.png'" class="team-logo-tiny">
+                <span>{{getPlayerTeam(player)?.name || 'Unknown Team'}}</span>
+              </div>
+              <span *ngIf="!isPlayerSold(player)">-</span>
+            </td>
+            <td>
+              <span *ngIf="isPlayerSold(player)">₹{{getPlayerAmount(player)}}</span>
+              <span *ngIf="!isPlayerSold(player)">-</span>
+            </td>
+            <td>
+              <span class="rtm-indicator" *ngIf="isPlayerSold(player) && isRtmUsed(player)">
+                <i class="fas fa-check-circle text-success"></i>
+              </span>
+              <span *ngIf="!isPlayerSold(player) || !isRtmUsed(player)">-</span>
+            </td>
+            <td>
+              <button class="btn btn-sm" 
+                      [class.btn-outline-primary]="getPlayerStatus(player) !== 'Available'"
+                      [class.btn-outline-info]="getPlayerStatus(player) === 'Available'"
+                      (click)="editPlayer(player, $event)">
+                <i [class]="getPlayerStatus(player) === 'Available' ? 'fas fa-eye' : 'fas fa-edit'"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredPlayers.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <h5>No players found</h5>
+      <p>Try adjusting your search criteria or switch to a different tab.</p>
+    </div>
+
+    <!-- Pagination Navigation -->
+    <div class="pagination-navigation" *ngIf="filteredPlayers.length > 0 && totalPages > 1">
+      <div class="pagination-info">
+        <span class="page-info">Page {{currentPage}} of {{totalPages}}</span>
+      </div>
+      
+      <div class="pagination-controls-nav">
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === 1" 
+                (click)="goToPage(1)">
+          <i class="fas fa-angle-double-left"></i>
+        </button>
+        
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === 1" 
+                (click)="previousPage()">
+          <i class="fas fa-angle-left"></i>
+        </button>
+        
+        <div class="page-numbers">
+          <button class="btn btn-sm page-number" 
+                  *ngFor="let page of getPageNumbers()" 
+                  [class.active]="page === currentPage"
+                  (click)="goToPage(page)">
+            {{page}}
+          </button>
+        </div>
+        
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === totalPages" 
+                (click)="nextPage()">
+          <i class="fas fa-angle-right"></i>
+        </button>
+        
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === totalPages" 
+                (click)="goToPage(totalPages)">
+          <i class="fas fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Player Details Sliding Panel -->
+<div class="player-details-panel" [class.open]="selectedPlayer" [class.closing]="panelClosing">
+  <div class="panel-header">
+    <h5>
+      <i [class]="selectedPlayer && getPlayerStatus(selectedPlayer) === 'Available' ? 'fas fa-eye' : 'fas fa-user-edit'"></i>
+      {{selectedPlayer ? (getPlayerStatus(selectedPlayer) === 'Available' ? 'View Player' : 'Edit Player') : 'Select a Player'}}
+    </h5>
+    <button class="btn btn-sm btn-ghost" (click)="closePanel()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="panel-content" *ngIf="selectedPlayer">
+    <!-- Player Info Section -->
+    <div class="player-info-section">
+      <div class="player-image-container">
+        <img [src]="selectedPlayer.player.imageUrl || 'assets/images/placeholder.png'" 
+             alt="{{selectedPlayer.player.name}}" class="player-image-large">
+        <div class="player-level-badge">{{selectedPlayer.player.playerLevel.code.toUpperCase()}}</div>
+      </div>
+      <div class="player-basic-info">
+        <h4 class="player-name">{{selectedPlayer.player.name}}</h4>
+        <p class="player-code">Code: {{selectedPlayer.player.code}}</p>
+        <p class="player-description">{{selectedPlayer.player.description}}</p>
+      </div>
+    </div>
+
+    <!-- Current Status Section -->
+    <div class="current-status-section">
+      <h6><i class="fas fa-info-circle"></i> Current Status</h6>
+      <div class="status-card" [class]="getPlayerStatusClass(selectedPlayer)">
+        <div class="status-header">
+          <span class="status-text">{{getPlayerStatus(selectedPlayer)}}</span>
+          <span class="status-icon">
+            <i [class]="getPlayerStatusIcon(selectedPlayer)"></i>
+          </span>
+        </div>
+        
+        <!-- Sold Player Details -->
+        <div class="status-details" *ngIf="isPlayerSold(selectedPlayer)">
+          <div class="detail-row">
+            <span class="label">Team:</span>
+            <div class="team-display">
+              <img [src]="getPlayerTeam(selectedPlayer)?.logoUrl || 'assets/images/placeholder.png'" class="team-logo-medium">
+              <span>{{getPlayerTeam(selectedPlayer)?.name || 'Unknown Team'}}</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <span class="label">Amount:</span>
+            <span class="amount-display">₹{{getPlayerAmount(selectedPlayer)}}</span>
+          </div>
+          <div class="detail-row">
+            <span class="label">RTM Used:</span>
+            <span class="rtm-display" [class.rtm-yes]="isRtmUsed(selectedPlayer)">
+              {{isRtmUsed(selectedPlayer) ? 'Yes' : 'No'}}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Section -->
+    <div class="action-section" *ngIf="getPlayerStatus(selectedPlayer) !== 'Available'">
+      <div class="action-buttons">
+        <button class="btn btn-danger btn-lg" 
+                *ngIf="isPlayerSold(selectedPlayer)"
+                (click)="showReleaseConfirmation()"
+                [disabled]="isProcessing">
+          <i class="fas fa-user-times"></i>
+          Release from Team
+        </button>
+        
+        <button class="btn btn-warning btn-lg" 
+                *ngIf="isPlayerUnsold(selectedPlayer)"
+                (click)="showUnmarkConfirmation()"
+                [disabled]="isProcessing">
+          <i class="fas fa-undo"></i>
+          Unmark as Unsold
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="confirmation-modal" *ngIf="showConfirmation">
+  <div class="modal-backdrop" (click)="cancelAction()"></div>
+  <div class="modal-content">
+    <div class="modal-header" [class]="confirmationType">
+      <div class="modal-icon">
+        <i [class]="getConfirmationIcon()"></i>
+      </div>
+      <h4>{{getConfirmationTitle()}}</h4>
+    </div>
+    
+    <div class="modal-body">
+      <div class="player-summary" *ngIf="selectedPlayer">
+        <img [src]="selectedPlayer.player.imageUrl || 'assets/images/placeholder.png'" class="player-thumb">
+        <div class="player-info">
+          <h6>{{selectedPlayer.player.name}}</h6>
+          <p>{{selectedPlayer.player.code}} - {{selectedPlayer.player.playerLevel.code.toUpperCase()}}</p>
+        </div>
+      </div>
+      
+      <div class="confirmation-message">
+        <p>{{getConfirmationMessage()}}</p>
+        <div class="warning-note" *ngIf="confirmationType === 'release'">
+          <i class="fas fa-exclamation-triangle"></i>
+          This action will make the player available for auction again.
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="cancelAction()">Cancel</button>
+      <button class="btn" [class]="getConfirmationButtonClass()" 
+              (click)="confirmAction()" [disabled]="isProcessing">
+        <i class="fas fa-spinner fa-spin" *ngIf="isProcessing"></i>
+        {{getConfirmationButtonText()}}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Toast -->
+<div class="toast-container" *ngIf="showSuccessToast">
+  <div class="toast success">
+    <div class="toast-content">
+      <i class="fas fa-check-circle"></i>
+      <span>{{successMessage}}</span>
+    </div>
+  </div>
+</div>
