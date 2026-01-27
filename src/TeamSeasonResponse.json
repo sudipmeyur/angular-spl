@@ -3,6 +3,7 @@
         "item": {
             "code": "tm1s6",
             "id": 1,
+            "isRtmEligible": true,
             "playerTeams": [
                 {
                     "isManager": false,

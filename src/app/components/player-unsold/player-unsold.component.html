@@ -90,8 +90,7 @@
                     <span>{{selectedTeamSeason.team.name}}</span>
                   </div>
                   <small class="team-stats">
-                    [rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
-                     free={{selectedTeamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
+                    [<span *ngIf="selectedTeamSeason.isRtmEligible">rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; </span>free={{selectedTeamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
                      player={{selectedTeamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
                   </small>
                 </div>
@@ -109,8 +108,7 @@
                     <span>{{teamSeason.team.name}}</span>
                   </div>
                   <small class="team-stats">
-                    [rtm={{teamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
-                     free={{teamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
+                    [<span *ngIf="teamSeason.isRtmEligible">rtm={{teamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; </span>free={{teamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
                      player={{teamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
                   </small>
                 </div>
@@ -165,8 +163,7 @@
                        alt="Team Logo" class="team-logo me-2">
                   <span><strong>Selected:</strong> {{selectedTeamSeason.team.name}}</span>
                   <small class="team-stats ms-auto">
-                    [rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
-                     free={{selectedTeamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
+                    [<span *ngIf="selectedTeamSeason.isRtmEligible">rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; </span>free={{selectedTeamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
                      player={{selectedTeamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
                   </small>
                 </div>
@@ -185,8 +182,8 @@
                             [class.rtm-off]="!playerForm.isRtmUsed"
                             [class.rtm-disabled]="isRtmDisabled()"
                             [disabled]="isRtmDisabled()"
-                            [title]="isRtmExhausted() && selectedTeamSeason ? 'RTM exhausted for ' + selectedTeamSeason.team.name : null"
-                            (click)="toggleRtm()">
+                            [title]="getRtmTooltip()"
+                            (click)="toggleRtm()">>
                       <i class="fas" [class.fa-toggle-on]="playerForm.isRtmUsed" [class.fa-toggle-off]="!playerForm.isRtmUsed"></i>
                       <span class="ms-1">{{playerForm.isRtmUsed ? 'ON' : 'OFF'}}</span>
                     </button>

@@ -751,6 +751,8 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
         console.warn('Cannot toggle RTM: No team selected');
       } else if (!this.currentSeason) {
         console.warn('Cannot toggle RTM: No season data available');
+      } else if (!this.selectedTeamSeason.isRtmEligible) {
+        console.warn(`Cannot enable RTM: Team ${this.selectedTeamSeason.team.name} is not eligible for RTM`);
       } else {
         const rtmUsed = this.selectedTeamSeason.totalRtmUsed || 0;
         const maxRtmAllowed = this.currentSeason.maxRtmAllowed || 0;
@@ -774,6 +776,11 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       return false;
     }
 
+    // Check if the team season is RTM eligible
+    if (!this.selectedTeamSeason.isRtmEligible) {
+      return true;
+    }
+
     // If RTM is currently OFF, only allow turning it ON if RTM slots are available
     const rtmUsed = this.selectedTeamSeason.totalRtmUsed || 0;
     const maxRtmAllowed = this.currentSeason.maxRtmAllowed || 0;
@@ -791,6 +798,29 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     const maxRtmAllowed = this.currentSeason.maxRtmAllowed || 0;
     
     return rtmUsed >= maxRtmAllowed;
+  }
+
+  getRtmTooltip(): string | null {
+    if (!this.selectedTeamSeason || !this.currentSeason) {
+      return 'Please select a team first';
+    }
+
+    if (!this.selectedTeamSeason.isRtmEligible) {
+      return `${this.selectedTeamSeason.team.name} is not eligible for RTM`;
+    }
+
+    const rtmUsed = this.selectedTeamSeason.totalRtmUsed || 0;
+    const maxRtmAllowed = this.currentSeason.maxRtmAllowed || 0;
+    
+    if (rtmUsed >= maxRtmAllowed) {
+      return `RTM exhausted for ${this.selectedTeamSeason.team.name} (${rtmUsed}/${maxRtmAllowed})`;
+    }
+
+    if (this.playerForm.isRtmUsed) {
+      return `RTM is ON for ${this.selectedTeamSeason.team.name}`;
+    }
+
+    return `RTM available for ${this.selectedTeamSeason.team.name} (${rtmUsed}/${maxRtmAllowed})`;
   }
 
   clearAllPlayerSelections() {
