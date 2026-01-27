@@ -90,7 +90,7 @@
                     <span>{{selectedTeamSeason.team.name}}</span>
                   </div>
                   <small class="team-stats">
-                    [rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
+                    [<span *ngIf="selectedTeamSeason.isRtmEligible">rtm={{selectedTeamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; </span>
                      free={{selectedTeamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
                      player={{selectedTeamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
                   </small>
@@ -109,7 +109,7 @@
                     <span>{{teamSeason.team.name}}</span>
                   </div>
                   <small class="team-stats">
-                    [rtm={{teamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; 
+                    [<span *ngIf="teamSeason.isRtmEligible">rtm={{teamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; </span>
                      free={{teamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
                      player={{teamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
                   </small>

@@ -183,7 +183,7 @@
                             [class.rtm-disabled]="isRtmDisabled()"
                             [disabled]="isRtmDisabled()"
                             [title]="getRtmTooltip()"
-                            (click)="toggleRtm()">>
+                            (click)="toggleRtm()">
                       <i class="fas" [class.fa-toggle-on]="playerForm.isRtmUsed" [class.fa-toggle-off]="!playerForm.isRtmUsed"></i>
                       <span class="ms-1">{{playerForm.isRtmUsed ? 'ON' : 'OFF'}}</span>
                     </button>
