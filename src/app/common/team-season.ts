@@ -17,12 +17,13 @@ export class TeamSeason {
     totalPlayer?: number;
     totalRtmUsed?: number;
     totalFreeUsed?: number;
+    isRtmEligible?: boolean;
     season: Season;
     team: Team;
     playerTeams: PlayerTeam[];
     teamSeasonPlayerLevels: TeamSeasonPlayerLevel[];
 
-    constructor(id: number,code: string, season: Season, team: Team, playerTeams: PlayerTeam[], totalAmountSpent?: number, totalPlayer?: number, totalRtmUsed?: number, totalFreeUsed?: number,teamSeasonPlayerLevels?: TeamSeasonPlayerLevel[]) {
+    constructor(id: number,code: string, season: Season, team: Team, playerTeams: PlayerTeam[], totalAmountSpent?: number, totalPlayer?: number, totalRtmUsed?: number, totalFreeUsed?: number,isRtmEligible?: boolean,teamSeasonPlayerLevels?: TeamSeasonPlayerLevel[]) {
         this.id = id;
         this.code = code;
         this.season = season;
@@ -32,6 +33,7 @@ export class TeamSeason {
         this.totalPlayer = totalPlayer || 0;
         this.totalRtmUsed = totalRtmUsed || 0;
         this.totalFreeUsed = totalFreeUsed || 0;
+        this.isRtmEligible = isRtmEligible;
         this.teamSeasonPlayerLevels = teamSeasonPlayerLevels || [];
     }
 }
