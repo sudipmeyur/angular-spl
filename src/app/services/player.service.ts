@@ -28,6 +28,12 @@ export class PlayerService {
     );
   }
 
+  getActivePlayers(): Observable<Player[]>{
+    return this.httpClient.get<GetResponse>(`${PLAYERS_URL}`).pipe(
+      map(response => response.data.items)  
+    );
+  }
+
   getPlayers(playerLevelId: number, seasonId: number): Observable<Player[]>{
     return this.httpClient.get<GetResponse>(`${PLAYERS_URL}/available?seasonId=${seasonId}&playerLevelId=${playerLevelId}`).pipe(
       map(response => response.data.items)  
