@@ -1,0 +1,55 @@
+<!-- Processing Loader Overlay -->
+<div class="processing-overlay" *ngIf="isProcessing">
+  <div class="processing-container">
+    <div class="spinner">
+      <div class="spinner-border"></div>
+    </div>
+    <p class="processing-message">{{ processingMessage }}</p>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="confirmation-modal-wrapper" *ngIf="showConfirmation">
+  <div class="modal-backdrop" (click)="cancelAction()"></div>
+  <div class="modal-content-wrapper">
+    <div class="modal-content" [class]="'modal-' + confirmationConfig.type">
+      <div class="modal-header">
+        <div class="modal-icon">
+          <i [class]="confirmationConfig.icon"></i>
+        </div>
+        <h4 class="modal-title">{{ confirmationConfig.title }}</h4>
+      </div>
+
+      <div class="modal-body">
+        <p class="modal-message">{{ confirmationConfig.message }}</p>
+      </div>
+
+      <div class="modal-footer">
+        <button 
+          class="btn btn-secondary" 
+          (click)="cancelAction()"
+          *ngIf="confirmationConfig.cancelText">
+          {{ confirmationConfig.cancelText }}
+        </button>
+        <button 
+          class="btn" 
+          [class]="getConfirmationButtonClass()"
+          (click)="confirmAction()">
+          {{ confirmationConfig.confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notifications -->
+<div class="toast-container" *ngIf="currentToast">
+  <div class="toast" [class]="getToastClass()">
+    <div class="toast-icon">
+      <i [class]="getToastIcon()"></i>
+    </div>
+    <div class="toast-content">
+      <p class="toast-message">{{ currentToast.message }}</p>
+    </div>
+  </div>
+</div>

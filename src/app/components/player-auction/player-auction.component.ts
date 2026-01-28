@@ -7,6 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import { SeasonService } from 'src/app/services/season.service';
 import { Season } from 'src/app/common/season';
 import { PlayerLevel } from 'src/app/common/player-level';
+import { UiService } from 'src/app/services/ui.service';
 
 interface ShuffleCard {
   teamSeason: TeamSeason;
@@ -68,7 +69,8 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     private seasonService: SeasonService,
     private el: ElementRef,
     private renderer: Renderer2,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private uiService: UiService
   ) { }
 
   ngOnInit(): void {
@@ -125,32 +127,40 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   listPlayers(callback?: () => void) {
     console.log('Calling getPlayers API with season:', this.currentSeason);
 
-    
+    this.uiService.showProcessing('Loading players...');
 
     this.playerService.getPlayers(this.currentPlayerLevelId, this.currentSeasonId).subscribe(
       data => {
         console.log('API response:', data);
         this.players = data;
+        this.uiService.hideProcessing();
         if (callback) callback();
       },
       error => {
         console.error('API error:', error);
+        this.uiService.hideProcessing();
+        this.uiService.showError('Failed to load players: ' + error.message);
       }
     );
   }
 
   loadTeamSeasons() {
     console.log('Loading team seasons from API for season ID:', this.currentSeasonId);
+    this.uiService.showProcessing('Loading team seasons...');
+    
     this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
       data => {
         console.log('Team seasons loaded from API:', data.length, 'teams');
         this.teamSeasons = data;
+        this.uiService.hideProcessing();
         // Always rebuild selectable team seasons after loading from API
         // This ensures the filtering is applied based on current player level
         this.rebuildSelectableTeamSeasons();
       },
       error => {
         console.error('Error loading team seasons:', error);
+        this.uiService.hideProcessing();
+        this.uiService.showError('Failed to load team seasons: ' + error.message);
         // Initialize empty arrays on error
         this.teamSeasons = [];
         this.selectableTeamSeasons = [];
@@ -457,79 +467,117 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
   saveSoldPlayer() {
     if (!this.playerForm.teamSeasonCode || !this.playerForm.amount) {
-      alert('Please select team season and enter amount');
+      this.uiService.showAlert(
+        'Validation Error',
+        'Please select team season and enter amount',
+        'warning'
+      );
       return;
     }
 
-    const confirmMessage = `Confirm player assignment:\n\nPlayer: ${this.selectedPlayer?.name}\nTeam: ${this.selectedTeamSeason?.team.name}\nAmount: ₹${this.playerForm.amount}\nRTM: ${this.playerForm.isRtmUsed ? 'YES' : 'NO'}\n\nProceed with save?`;
+    const confirmMessage = `Confirm player assignment:\n\nPlayer: ${this.selectedPlayer?.name}\nTeam: ${this.selectedTeamSeason?.team.name}\nAmount: ₹${this.playerForm.amount}\nRTM: ${this.playerForm.isRtmUsed ? 'YES' : 'NO'}`;
     
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    const request = new PlayerTeamRequest(
-      this.selectedPlayer?.code || '',
-      this.playerForm.teamSeasonCode,
-      this.playerForm.amount,
-      '',
-      '',
-      this.currentPlayerLevel?.isFree,
-      this.playerForm.isRtmUsed,
-      false,
-      false
-    );
-
-    this.playerService.savePlayerTeam(request).subscribe(
-      response => {
-        alert('Player saved successfully!');
-        this.resetFormData();
-        this.closeEnvelope();
-        this.clearPlayerSelection();
-        this.listPlayers();
-        this.loadTeamSeasons();
+    console.log('saveSoldPlayer: Showing confirmation dialog');
+    
+    this.uiService.showConfirmation(
+      {
+        title: 'Confirm Player Assignment',
+        message: confirmMessage,
+        icon: 'fas fa-check-circle',
+        confirmText: 'Save',
+        cancelText: 'Cancel',
+        type: 'success'
       },
-      error => {
-        alert('Error saving player: ' + error.message);
+      () => {
+        console.log('saveSoldPlayer: Confirmation callback executed');
+        
+        const request = new PlayerTeamRequest(
+          this.selectedPlayer?.code || '',
+          this.playerForm.teamSeasonCode,
+          this.playerForm.amount || 0,
+          '',
+          '',
+          this.currentPlayerLevel?.isFree,
+          this.playerForm.isRtmUsed,
+          false,
+          false
+        );
+
+        console.log('saveSoldPlayer: Showing processing loader');
+        this.uiService.showProcessing('Saving player...');
+
+        this.playerService.savePlayerTeam(request).subscribe(
+          () => {
+            console.log('saveSoldPlayer: API call successful');
+            this.uiService.hideProcessing();
+            this.uiService.showSuccess('Player saved successfully!');
+            this.resetFormData();
+            this.closeEnvelope();
+            this.clearPlayerSelection();
+            this.listPlayers();
+            this.loadTeamSeasons();
+          },
+          error => {
+            console.error('saveSoldPlayer: API call failed', error);
+            this.uiService.hideProcessing();
+            this.uiService.showError('Error saving player: ' + error.message);
+          }
+        );
       }
     );
   }
 
   saveUnSoldPlayer(){
     if(!this.selectedPlayer?.code){
-      alert('Please select player');
+      this.uiService.showAlert(
+        'Validation Error',
+        'Please select player',
+        'warning'
+      );
       return;
     }
 
-    const confirmMessage = `Confirm player unsold:\n\nPlayer: ${this.selectedPlayer?.name}\n\nProceed with save?`;
+    const confirmMessage = `Confirm player unsold:\n\nPlayer: ${this.selectedPlayer?.name}`;
     
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    const request = new PlayerTeamRequest(
-      this.selectedPlayer?.code || '',
-      '',
-      0,
-      '',
-      this.currentSeasonCode,
-      false,
-      false
-    );
-
-    this.playerService.saveUnsoldPlayer(request).subscribe(
-      response => {
-        alert('Player saved successfully!');
-        this.resetFormData();
-        this.closeEnvelope();
-        this.clearPlayerSelection();
-        this.listPlayers();
-        this.loadTeamSeasons();
+    this.uiService.showConfirmation(
+      {
+        title: 'Mark Player as Unsold',
+        message: confirmMessage,
+        icon: 'fas fa-times-circle',
+        confirmText: 'Mark Unsold',
+        cancelText: 'Cancel',
+        type: 'warning'
       },
-      error => {
-        alert('Error saving player: ' + error.message);
+      () => {
+        const request = new PlayerTeamRequest(
+          this.selectedPlayer?.code || '',
+          '',
+          0,
+          '',
+          this.currentSeasonCode,
+          false,
+          false
+        );
+
+        this.uiService.showProcessing('Saving player as unsold...');
+
+        this.playerService.saveUnsoldPlayer(request).subscribe(
+          () => {
+            this.uiService.hideProcessing();
+            this.uiService.showSuccess('Player marked as unsold successfully!');
+            this.resetFormData();
+            this.closeEnvelope();
+            this.clearPlayerSelection();
+            this.listPlayers();
+            this.loadTeamSeasons();
+          },
+          error => {
+            this.uiService.hideProcessing();
+            this.uiService.showError('Error saving player: ' + error.message);
+          }
+        );
       }
     );
-
   }
 
   resetFormData() {

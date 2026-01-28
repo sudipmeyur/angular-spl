@@ -9,6 +9,7 @@ import { PLAYERS_URL, PLAYER_TEAMS_URL, TEAM_SEASONS_URL, SEASONS_URL, PLAYER_LE
 import { Season } from '../common/season';
 import { PlayerLevel } from '../common/player-level';
 import { PlayerTeamInfo } from '../common/player-team-info';
+import { PlayerRevertRequest } from '../common/player-revert-request';
 
 @Injectable({
   providedIn: 'root'
@@ -49,9 +50,19 @@ export class PlayerService {
     return this.httpClient.post(PLAYER_TEAMS_URL, request);
   }
 
+  revertPlayerTeam(playerTeamCode: string): Observable<any> {
+    return this.httpClient.delete(`${PLAYER_TEAMS_URL}/${playerTeamCode}`);
+  }
+
   saveUnsoldPlayer(request: PlayerTeamRequest): Observable<any> {
     return this.httpClient.post(`${PLAYERS_URL}/unsold`, request);
   }
+
+  revertUnsoldPlayer(unsoldPlayerId: string): Observable<any> {
+    return this.httpClient.delete(`${PLAYERS_URL}/unsold/${unsoldPlayerId}`);
+  }
+
+  
 
   getTeamSquad(teamSeasonId: number): Observable<TeamSeason> {
     return this.httpClient.get<TeamSeasonResponse>(`${TEAM_SEASONS_URL}/${teamSeasonId}`).pipe(

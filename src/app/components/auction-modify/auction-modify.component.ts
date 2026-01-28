@@ -1,12 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { Player } from '../../common/player';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { PlayerLevel } from '../../common/player-level';
 import { Team } from '../../common/team';
 import { PlayerService } from '../../services/player.service';
 import { SeasonService } from '../../services/season.service';
 import { Season } from '../../common/season';
 import { TeamSeason } from '../../common/team-season';
-import { PlayerTeamRequest } from '../../common/player-team-request';
 import { PlayerTeamInfo } from '../../common/player-team-info';
 
 @Component({
@@ -33,9 +31,11 @@ export class AuctionModifyComponent implements OnInit {
   confirmationType: 'release' | 'unmark' = 'release';
   isProcessing: boolean = false;
   
-  // Success toast
+  // Toast notifications
   showSuccessToast: boolean = false;
   successMessage: string = '';
+  showErrorToast: boolean = false;
+  errorMessage: string = '';
 
   // Loading state
   isLoading: boolean = true;
@@ -51,7 +51,7 @@ export class AuctionModifyComponent implements OnInit {
   filteredPlayers: PlayerTeamInfo[] = [];
   paginatedPlayers: PlayerTeamInfo[] = []; // Players for current page
 
-  constructor(private playerService: PlayerService, private seasonService: SeasonService) { }
+  constructor(private playerService: PlayerService, private seasonService: SeasonService, private cdr: ChangeDetectorRef) { }
 
   ngOnInit(): void {
     this.seasonService.currentSeason$.subscribe(season => {
@@ -96,8 +96,10 @@ export class AuctionModifyComponent implements OnInit {
       next: (playerTeamInfos: PlayerTeamInfo[]) => {
         // Use PlayerTeamInfo directly
         this.allPlayers = playerTeamInfos;
+        this.filterOutManagers();
 
         this.filterPlayers();
+        this.recalculateCounts();
         this.isLoading = false;
       },
       error: (error) => {
@@ -107,6 +109,9 @@ export class AuctionModifyComponent implements OnInit {
       }
     });
   }
+ filterOutManagers(): void {
+  this.allPlayers = this.allPlayers.filter(p => !p.teamInfo?.isManager);
+ }
 
   // Tab management
   switchTab(tabCode: string): void {
@@ -279,83 +284,105 @@ export class AuctionModifyComponent implements OnInit {
     return this.allPlayers.filter(p => p.isUnsold).length;
   }
 
+  // Recalculate counts - called after data updates
+  recalculateCounts(): void {
+    // Force Angular to detect changes by triggering change detection
+    // This ensures the template re-evaluates the count methods
+    this.playerLevels = [...this.playerLevels];
+  }
+
   // Confirmation modal methods
   showReleaseConfirmation(): void {
+    console.log('Release confirmation modal triggered');
     this.confirmationType = 'release';
     this.showConfirmation = true;
   }
 
   showUnmarkConfirmation(): void {
+    console.log('Unmark confirmation modal triggered');
     this.confirmationType = 'unmark';
     this.showConfirmation = true;
   }
 
   cancelAction(): void {
+    console.log('Cancel action triggered');
     this.showConfirmation = false;
     this.isProcessing = false;
   }
 
   confirmAction(): void {
-    if (!this.selectedPlayer) return;
+    if (!this.selectedPlayer) {
+      console.warn('No player selected for confirmation action');
+      return;
+    }
 
     this.isProcessing = true;
 
     if (this.confirmationType === 'release') {
-      // Build PlayerTeamRequest for releasing a player
-      const request = new PlayerTeamRequest(
-        this.selectedPlayer.player.code,           // playerCode
-        this.selectedPlayer.teamInfo?.team?.code || '',  // teamSeasonCode
-        this.selectedPlayer.teamInfo?.soldAmount || 0,   // soldAmount
-        undefined,                           // code (optional)
-        this.currentSeason?.code,            // seasonCode
-        false,                               // isFree
-        this.selectedPlayer.teamInfo?.isRtmUsed || false,    // isRtmUsed
-        false,                               // isUnsold
-        false                                // isManager
-      );
+      // Use revertPlayerAuction to release a player from team
+      const playerTeamCode = this.selectedPlayer.teamInfo?.playerTeamCode;
+      
+      console.log('Release action initiated for player:', this.selectedPlayer.player.name);
+      console.log('Player team code:', playerTeamCode);
+      
+      if (!playerTeamCode) {
+        console.error('Unable to determine player team code for release');
+        this.showErrorMessage('Unable to determine player team code for release');
+        this.isProcessing = false;
+        this.showConfirmation = false;
+        return;
+      }
 
-      this.playerService.savePlayerTeam(request).subscribe({
-        next: () => {
-          this.releasePlayer();
+      this.playerService.revertPlayerTeam(playerTeamCode).subscribe({
+        next: (response) => {
+          console.log('Player released successfully:', response);
           this.isProcessing = false;
           this.showConfirmation = false;
           this.closePanel();
-          this.filterPlayers();
-          this.showSuccessMessage();
+          this.loadAuctionResultPlayers(this.currentSeason!.id);
+          this.showSuccessMessage('Player released successfully');
         },
         error: (error) => {
           console.error('Error releasing player:', error);
-          this.loadingError = 'Failed to release player';
+          const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+          this.showErrorMessage('Failed to release player: ' + errorMsg);
           this.isProcessing = false;
           this.showConfirmation = false;
         }
       });
     } else {
-      // Build PlayerTeamRequest for unmarking unsold player
-      const request = new PlayerTeamRequest(
-        this.selectedPlayer.player.code,           // playerCode
-        '',                                  // teamSeasonCode (empty for unsold)
-        0,                                   // soldAmount
-        undefined,                           // code (optional)
-        this.currentSeason?.code,            // seasonCode
-        false,                               // isFree
-        false,                               // isRtmUsed
-        true,                                // isUnsold
-        false                                // isManager
-      );
+      // Use revertUnsoldPlayer to unmark a player as unsold
+      const unsoldPlayerId = this.selectedPlayer.unsoldPlayerId;
+      
+      console.log('Unmark action initiated for player:', this.selectedPlayer.player.name);
+      console.log('Unsold player ID:', unsoldPlayerId);
+      
+      if (!unsoldPlayerId) {
+        console.error('Unable to determine unsold player ID for unmark');
+        this.showErrorMessage('Unable to determine unsold player ID for unmark');
+        this.isProcessing = false;
+        this.showConfirmation = false;
+        return;
+      }
 
-      this.playerService.saveUnsoldPlayer(request).subscribe({
-        next: () => {
-          this.unmarkPlayer();
+      console.log('Calling revertUnsoldPlayer with ID:', unsoldPlayerId.toString());
+      
+      this.playerService.revertUnsoldPlayer(unsoldPlayerId.toString()).subscribe({
+        next: (response) => {
+          console.log('Player unmarked successfully:', response);
           this.isProcessing = false;
           this.showConfirmation = false;
           this.closePanel();
-          this.filterPlayers();
-          this.showSuccessMessage();
+          this.loadAuctionResultPlayers(this.currentSeason!.id);
+          this.showSuccessMessage('Player unmarked successfully');
         },
         error: (error) => {
           console.error('Error unmarking player:', error);
-          this.loadingError = 'Failed to unmark player';
+          console.error('Error status:', error?.status);
+          console.error('Error message:', error?.message);
+          console.error('Error response:', error?.error);
+          const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+          this.showErrorMessage('Failed to unmark player: ' + errorMsg);
           this.isProcessing = false;
           this.showConfirmation = false;
         }
@@ -363,25 +390,26 @@ export class AuctionModifyComponent implements OnInit {
     }
   }
 
-  private releasePlayer(): void {
-    if (this.selectedPlayer) {
-      this.selectedPlayer.teamInfo = undefined;
-      this.successMessage = `${this.selectedPlayer.player.name} has been released from the team.`;
-    }
-  }
-
-  private unmarkPlayer(): void {
-    if (this.selectedPlayer) {
-      this.selectedPlayer.isUnsold = false;
-      this.successMessage = `${this.selectedPlayer.player.name} has been unmarked as unsold.`;
-    }
-  }
-
-  private showSuccessMessage(): void {
+  private showSuccessMessage(message?: string): void {
+    this.successMessage = message || 'Operation completed successfully';
     this.showSuccessToast = true;
+    this.showErrorToast = false; // Hide error if success
+    this.cdr.detectChanges(); // Force change detection
     setTimeout(() => {
       this.showSuccessToast = false;
-    }, 3000);
+      this.cdr.detectChanges();
+    }, 5000);
+  }
+
+  private showErrorMessage(message?: string): void {
+    this.errorMessage = message || 'An error occurred';
+    this.showErrorToast = true;
+    this.showSuccessToast = false; // Hide success if error
+    this.cdr.detectChanges(); // Force change detection
+    setTimeout(() => {
+      this.showErrorToast = false;
+      this.cdr.detectChanges();
+    }, 5000);
   }
 
   // Confirmation modal helpers
