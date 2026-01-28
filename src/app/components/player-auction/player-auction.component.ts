@@ -62,7 +62,9 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     amount: null,
     isRtmUsed: false
   };
-  
+
+  maxPlayerBudget: number | null = null;
+  nextPlayerBudget: number | null = null;
 
   constructor(
     private playerService: PlayerService,
@@ -457,6 +459,9 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.playerForm.teamSeasonCode = teamSeason.code;
     this.dropdownOpen = false;
     
+    // Calculate next player budget for the current player level
+    this.calculateNextPlayerBudget(teamSeason);
+    
     // Reset RTM state when selecting a new team to ensure proper state management
     // If the new team has exhausted RTM slots, turn OFF RTM automatically
     if (this.playerForm.isRtmUsed && this.isRtmDisabled()) {
@@ -466,10 +471,24 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   saveSoldPlayer() {
-    if (!this.playerForm.teamSeasonCode || !this.playerForm.amount) {
+    if(!this.displayedPlayer){
+      this.uiService.showAlert(
+        'Validation Error',
+        'Please select player',
+        'warning'
+      );
+      return;
+    }else if (!this.playerForm.teamSeasonCode || !this.playerForm.amount) {
       this.uiService.showAlert(
         'Validation Error',
         'Please select team season and enter amount',
+        'warning'
+      );
+      return;
+    }else if(this.nextPlayerBudget && this.nextPlayerBudget < this.playerForm.amount ){
+      this.uiService.showAlert(
+        'Validation Error',
+        `Please enter amount within the max budget ₹${this.nextPlayerBudget}`,
         'warning'
       );
       return;
@@ -528,7 +547,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   saveUnSoldPlayer(){
-    if(!this.selectedPlayer?.code){
+    if(!this.displayedPlayer){
       this.uiService.showAlert(
         'Validation Error',
         'Please select player',
@@ -899,12 +918,32 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     if (this.selectionMode === 'shuffle' && !this.isShuffleCardsEnabled()) {
       this.selectionMode = 'manual';
     }
-    
+    this.nextPlayerBudget = null;
     console.log('All player selections cleared');
   }
 
   // Amount input methods
   isAmountReadonly(): boolean {
     return this.currentPlayerLevel?.isFree === true;
+  }
+
+  calculateNextPlayerBudget(teamSeason: TeamSeason): void {
+    // Find the matching TeamSeasonPlayerLevel for the current player level
+    const matchingLevel = teamSeason.teamSeasonPlayerLevels?.find(
+      level => level.playerLevel.code === this.currentPlayerLevelCode
+    );
+
+    if (matchingLevel) {
+      this.nextPlayerBudget = matchingLevel.nextPlayerBudget;
+      console.log(
+        `Next player budget calculated for ${teamSeason.team.name} at level ${this.currentPlayerLevelCode}: ₹${this.nextPlayerBudget}`
+      );
+    } else {
+      // If no matching level found, set to null
+      this.nextPlayerBudget = null;
+      console.warn(
+        `No matching player level found for ${this.currentPlayerLevelCode} in team ${teamSeason.team.name}`
+      );
+    }
   }
 }

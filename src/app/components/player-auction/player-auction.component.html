@@ -195,7 +195,12 @@
               </div>
               <div class="col-6">
                 <div class="amount-section">
-                  <label class="form-label">Amount</label>
+                  <label class="form-label">
+                    Amount
+                    <span *ngIf="nextPlayerBudget !== null" class="max-budget-label" >
+                      (Max: ₹{{nextPlayerBudget}})
+                    </span>
+                  </label>
                   <div class="amount-input-container">
                     <input type="number" 
                            class="form-control form-control-sm amount-input" 
@@ -204,8 +209,13 @@
                            name="amount" 
                            placeholder="Enter amount" 
                            step="0.5" 
-                           max="999.99"
+                           [max]="nextPlayerBudget || 999.99"
                            [readonly]="isAmountReadonly()">
+                    <small *ngIf="nextPlayerBudget !== null && playerForm.amount && playerForm.amount > nextPlayerBudget" 
+                           class="text-danger">
+                      <i class="fas fa-exclamation-circle"></i>
+                      Amount exceeds max budget
+                    </small>
                   </div>
                 </div>
               </div>

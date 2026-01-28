@@ -1085,3 +1085,25 @@ body::before {
   font-size: 9px;
   color: #17a2b8;
 }
+
+.amount-input-container small.text-danger {
+  color: #dc3545;
+}
+
+.amount-input-container small.text-danger i {
+  color: #dc3545;
+}
+
+/* Max Budget Label Styles */
+.max-budget-label {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #FFD700;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}

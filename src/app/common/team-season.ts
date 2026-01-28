@@ -8,6 +8,7 @@ export interface TeamSeasonPlayerLevel {
     };
     totalAmountSpent: number;
     totalPlayerCount: number;
+    nextPlayerBudget: number;
 }
 
 export class TeamSeason {
