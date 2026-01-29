@@ -1,0 +1,539 @@
+<div class="player-master-container">
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="isLoading">
+    <div class="spinner">
+      <i class="fas fa-spinner fa-spin"></i>
+      <p>Loading player data...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-banner" *ngIf="loadingError && !isLoading">
+    <div class="error-content">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{loadingError}}</span>
+      <button class="btn btn-sm btn-outline-danger" (click)="loadData()">
+        <i class="fas fa-redo"></i> Retry
+      </button>
+    </div>
+  </div>
+
+  <!-- Enhanced Tab Navigation -->
+  <div class="player-master-header" *ngIf="!isLoading">
+    <div class="level-tabs-container">
+      <div class="level-tab" 
+           *ngFor="let level of playerLevels" 
+           [class.active]="activeTab === level.code"
+           (click)="switchTab(level.code)">
+        <div class="tab-content">
+          <span class="level-name">{{level.code.toUpperCase()}}</span>
+          <div class="tab-counters">
+            <span class="player-count" title="Total Players">{{getPlayerCount(level.code)}}</span>
+          </div>
+        </div>
+        <div class="tab-indicator"></div>
+      </div>
+      <div class="level-tab all-tab" 
+           [class.active]="activeTab === 'all'"
+           (click)="switchTab('all')">
+        <div class="tab-content">
+          <span class="level-name">ALL</span>
+          <div class="tab-counters">
+            <span class="total-players" title="Total Players">{{getPlayerCount('all')}}</span>
+          </div>
+        </div>
+        <div class="tab-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Players Grid Section -->
+  <div class="players-grid-container" *ngIf="!isLoading">
+    <div class="grid-controls">
+      <div class="search-filter">
+        <input type="text" class="form-control" placeholder="Search players..." 
+               [(ngModel)]="searchTerm" (input)="filterPlayers()">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+      <div class="pagination-controls">
+        <select class="form-control items-per-page" [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
+          <option value="10">10 per page</option>
+          <option value="20">20 per page</option>
+          <option value="50">50 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+      </div>
+      <div class="view-toggle">
+        <button class="btn btn-sm" [class.active]="viewMode === 'grid'" (click)="setViewMode('grid')">
+          <i class="fas fa-th"></i>
+        </button>
+        <button class="btn btn-sm" [class.active]="viewMode === 'list'" (click)="setViewMode('list')">
+          <i class="fas fa-list"></i>
+        </button>
+      </div>
+      <div class="action-controls">
+        <button class="btn btn-primary" (click)="createNewPlayer()">
+          <i class="fas fa-plus"></i> Add Player
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Summary -->
+    <div class="results-summary" *ngIf="filteredPlayers.length > 0">
+      <span class="results-text">
+        Showing {{((currentPage - 1) * itemsPerPage) + 1}} - {{getEndIndex()}} 
+        of {{filteredPlayers.length}} players
+      </span>
+    </div>
+
+    <!-- Grid View -->
+    <div class="players-grid" *ngIf="viewMode === 'grid'">
+      <div class="player-card" 
+           *ngFor="let player of paginatedPlayers" 
+           [class.selected]="selectedPlayer && selectedPlayer.id === player.id"
+           (click)="selectPlayer(player)">
+        <div class="card-header">
+          <img [src]="getPlayerImageUrl(player)" 
+               alt="{{player.name}}" class="player-avatar"
+               (error)="onPlayerImageError($event)">
+          <div class="player-level-badge">
+            {{player.playerLevel.code.toUpperCase()}}
+          </div>
+        </div>
+        <div class="card-body">
+          <h6 class="player-name">{{player.name}}</h6>
+          <p class="player-code">{{player.code}}</p>
+          <p class="player-description" *ngIf="player.description">{{player.description}}</p>
+          <div class="player-details">
+            <div class="level-info">
+              <span class="level-name">{{player.playerLevel.name}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-actions">
+          <button class="btn btn-sm btn-primary" (click)="viewPlayer(player, $event)">
+            <i class="fas fa-eye"></i>
+            View
+          </button>
+          <button class="btn btn-sm btn-outline-primary" (click)="editPlayer(player, $event)">
+            <i class="fas fa-edit"></i>
+            Edit
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- List View -->
+    <div class="players-table-container" *ngIf="viewMode === 'list'">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Code</th>
+            <th>Level</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let player of paginatedPlayers" 
+              [class.selected]="selectedPlayer && selectedPlayer.id === player.id">
+            <td>
+              <div class="player-info-cell">
+                <img [src]="getPlayerImageUrl(player)" 
+                     class="player-avatar-small"
+                     (error)="onPlayerImageError($event)">
+                <span>{{player.name}}</span>
+              </div>
+            </td>
+            <td>{{player.code}}</td>
+            <td>
+              <span class="level-badge" [class]="'level-' + player.playerLevel.code">
+                {{player.playerLevel.code.toUpperCase()}}
+              </span>
+            </td>
+            <td>
+              <span class="description-text">{{player.description || '-'}}</span>
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-info" (click)="viewPlayer(player, $event)">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-primary" (click)="editPlayer(player, $event)">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="selectPlayer(player); showDeleteConfirmation()">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredPlayers.length === 0">
+      <div class="empty-icon">
+        <i class="fas fa-search"></i>
+      </div>
+      <h5>No players found</h5>
+      <p>Try adjusting your search criteria or switch to a different tab.</p>
+      <button class="btn btn-primary" (click)="createNewPlayer()">
+        <i class="fas fa-plus"></i> Add New Player
+      </button>
+    </div>
+
+    <!-- Pagination Navigation -->
+    <div class="pagination-navigation" *ngIf="filteredPlayers.length > 0 && totalPages > 1">
+      <div class="pagination-info">
+        <span class="page-info">Page {{currentPage}} of {{totalPages}}</span>
+      </div>
+      
+      <div class="pagination-controls-nav">
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === 1" 
+                (click)="goToPage(1)">
+          <i class="fas fa-angle-double-left"></i>
+        </button>
+        
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === 1" 
+                (click)="previousPage()">
+          <i class="fas fa-angle-left"></i>
+        </button>
+        
+        <div class="page-numbers">
+          <button class="btn btn-sm page-number" 
+                  *ngFor="let page of getPageNumbers()" 
+                  [class.active]="page === currentPage"
+                  (click)="goToPage(page)">
+            {{page}}
+          </button>
+        </div>
+        
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === totalPages" 
+                (click)="nextPage()">
+          <i class="fas fa-angle-right"></i>
+        </button>
+        
+        <button class="btn btn-sm pagination-btn" 
+                [disabled]="currentPage === totalPages" 
+                (click)="goToPage(totalPages)">
+          <i class="fas fa-angle-double-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Player Details/Edit Sliding Panel -->
+<div class="player-details-panel" [class.open]="selectedPlayer || isCreating" [class.closing]="panelClosing">
+  <div class="panel-header">
+    <h5>
+      <i [class]="isCreating ? 'fas fa-plus' : (isEditing ? 'fas fa-user-edit' : 'fas fa-eye')"></i>
+      {{isCreating ? 'Add New Player' : (isEditing ? 'Edit Player' : 'View Player')}}
+    </h5>
+    <button class="btn btn-sm btn-ghost" (click)="closePanel()">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  
+  <div class="panel-content" *ngIf="selectedPlayer || isCreating">
+    <!-- View Mode -->
+    <div class="view-mode" *ngIf="!isEditing && !isCreating && selectedPlayer">
+      <!-- Player Info Section -->
+      <div class="player-info-section">
+        <div class="player-image-container">
+          <img [src]="selectedPlayer.imageUrl || 'assets/images/placeholder.png'" 
+               alt="{{selectedPlayer.name}}" class="player-image-large">
+          <div class="player-level-badge">{{selectedPlayer.playerLevel.code.toUpperCase()}}</div>
+        </div>
+        <div class="player-basic-info">
+          <h4 class="player-name">{{selectedPlayer.name}}</h4>
+          <p class="player-code">Code: {{selectedPlayer.code}}</p>
+          <p class="player-description" *ngIf="selectedPlayer.description">{{selectedPlayer.description}}</p>
+        </div>
+      </div>
+
+      <!-- Player Details Section -->
+      <div class="player-details-section">
+        <h6><i class="fas fa-info-circle"></i> Player Details</h6>
+        <div class="details-card">
+          <div class="detail-row">
+            <span class="label">Player Level:</span>
+            <span class="value">{{selectedPlayer.playerLevel.name}} ({{selectedPlayer.playerLevel.code.toUpperCase()}})</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedPlayer.playerLevel.baseAmount">
+            <span class="label">Base Amount:</span>
+            <span class="value">₹{{selectedPlayer.playerLevel.baseAmount}}</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedPlayer.playerLevel.isFree">
+            <span class="label">Free Player:</span>
+            <span class="value">{{selectedPlayer.playerLevel.isFree ? 'Yes' : 'No'}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Section -->
+      <div class="action-section">
+        <div class="action-buttons">
+          <button class="btn btn-primary btn-lg" (click)="editPlayer(selectedPlayer)">
+            <i class="fas fa-edit"></i>
+            Edit Player
+          </button>
+          <button class="btn btn-danger btn-lg" (click)="showDeleteConfirmation()">
+            <i class="fas fa-trash"></i>
+            Delete Player
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit/Create Mode -->
+    <div class="edit-mode" *ngIf="(isEditing || isCreating) && editForm">
+      <form class="player-form" (ngSubmit)="savePlayer()" #playerForm="ngForm">
+        <!-- Player Image Section -->
+        <div class="form-section">
+          <h6><i class="fas fa-image"></i> Player Image</h6>
+          <div class="image-upload-section">
+            <div class="current-image">
+              <img [src]="getImageSource()" 
+                   alt="Player Image" 
+                   class="form-player-image"
+                   (error)="onImageError($event)">
+              <div class="image-status" *ngIf="imageStatus">
+                <i [class]="getImageStatusIcon()" [style.color]="getImageStatusColor()"></i>
+                <span>{{ imageStatus }}</span>
+              </div>
+            </div>
+            <div class="image-input">
+              <div class="upload-method-tabs">
+                <button type="button" 
+                        class="method-tab" 
+                        [class.active]="uploadMethod === 'file'"
+                        (click)="setUploadMethod('file')">
+                  <i class="fas fa-upload"></i> Upload File
+                </button>
+                <button type="button" 
+                        class="method-tab" 
+                        [class.active]="uploadMethod === 'url'"
+                        (click)="setUploadMethod('url')">
+                  <i class="fas fa-link"></i> Image URL
+                </button>
+              </div>
+
+              <!-- File Upload Method -->
+              <div class="upload-content" *ngIf="uploadMethod === 'file'">
+                <div class="file-upload-area" 
+                     [class.dragover]="isDragOver"
+                     (dragover)="onDragOver($event)"
+                     (dragleave)="onDragLeave($event)"
+                     (drop)="onDrop($event)"
+                     (click)="fileInput.click()">
+                  <input #fileInput 
+                         type="file" 
+                         accept="image/*" 
+                         style="display: none"
+                         (change)="onFileSelected($event)">
+                  <div class="upload-content-area">
+                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                    <p class="upload-text">
+                      <strong>Click to select</strong> or drag and drop an image
+                    </p>
+                    <p class="upload-hint">PNG, JPG, GIF up to 5MB</p>
+                  </div>
+                </div>
+                
+                <div class="selected-file-info" *ngIf="selectedFile">
+                  <div class="file-details">
+                    <i class="fas fa-file-image"></i>
+                    <div class="file-info">
+                      <div class="file-name">{{ selectedFile.name }}</div>
+                      <div class="file-size">{{ formatFileSize(selectedFile.size) }}</div>
+                    </div>
+                    <button type="button" 
+                            class="btn-remove-file" 
+                            (click)="removeSelectedFile()"
+                            title="Remove file">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  
+                  <div class="manual-upload-instructions">
+                    <h6><i class="fas fa-info-circle"></i> Manual Upload Required</h6>
+                    <ol>
+                      <li>Save this image as: <code>{{ suggestedFileName }}</code></li>
+                      <li>Copy the file to: <code>src/assets/images/players/</code></li>
+                      <li>The image will be available at: <code>{{ getAssetPath() }}</code></li>
+                    </ol>
+                    <button type="button" 
+                            class="btn btn-outline-primary btn-sm"
+                            (click)="copyAssetPath()">
+                      <i class="fas fa-copy"></i> Copy Asset Path
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- URL Method -->
+              <div class="upload-content" *ngIf="uploadMethod === 'url'">
+                <div class="form-group">
+                  <label for="imageUrl" class="form-label">Image URL</label>
+                  <input type="url" 
+                         id="imageUrl" 
+                         name="imageUrl" 
+                         class="form-control" 
+                         [(ngModel)]="editForm.imageUrl" 
+                         placeholder="Enter image URL or asset path"
+                         (input)="onImageUrlChange()">
+                  <div class="form-help">
+                    <small>Enter a full URL or asset path like: assets/images/players/player-name.jpg</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Basic Information Section -->
+        <div class="form-section">
+          <h6><i class="fas fa-user"></i> Basic Information</h6>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="playerName" class="form-label required">Player Name</label>
+              <input type="text" 
+                     id="playerName" 
+                     name="playerName" 
+                     class="form-control" 
+                     [(ngModel)]="editForm.name" 
+                     required 
+                     placeholder="Enter player name">
+              <div class="invalid-feedback" *ngIf="playerForm.submitted && !editForm.name">
+                Player name is required
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="playerCode" class="form-label required">Player Code</label>
+              <input type="text" 
+                     id="playerCode" 
+                     name="playerCode" 
+                     class="form-control" 
+                     [(ngModel)]="editForm.code" 
+                     required 
+                     placeholder="Enter player code">
+              <div class="invalid-feedback" *ngIf="playerForm.submitted && !editForm.code">
+                Player code is required
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="playerDescription" class="form-label">Description</label>
+            <textarea id="playerDescription" 
+                      name="playerDescription" 
+                      class="form-control" 
+                      [(ngModel)]="editForm.description" 
+                      rows="3" 
+                      placeholder="Enter player description (optional)"></textarea>
+          </div>
+        </div>
+
+        <!-- Player Level Section -->
+        <div class="form-section">
+          <h6><i class="fas fa-layer-group"></i> Player Level</h6>
+          <div class="form-group">
+            <label for="playerLevel" class="form-label required">Player Level</label>
+            <select id="playerLevel" 
+                    name="playerLevel" 
+                    class="form-control" 
+                    [(ngModel)]="editForm.playerLevel" 
+                    required>
+              <option value="" disabled>Select player level</option>
+              <option *ngFor="let level of playerLevels" [ngValue]="level">
+                {{level.name}} ({{level.code.toUpperCase()}})
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="playerForm.submitted && !editForm.playerLevel">
+              Player level is required
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+            <i class="fas fa-times"></i>
+            Cancel
+          </button>
+          <button type="submit" 
+                  class="btn btn-primary" 
+                  [disabled]="!isFormValid() || isProcessing">
+            <i class="fas fa-spinner fa-spin" *ngIf="isProcessing"></i>
+            <i [class]="isCreating ? 'fas fa-plus' : 'fas fa-save'" *ngIf="!isProcessing"></i>
+            {{isProcessing ? (isCreating ? 'Creating...' : 'Saving...') : (isCreating ? 'Create Player' : 'Save Changes')}}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="confirmation-modal" *ngIf="showConfirmation">
+  <div class="modal-backdrop" (click)="cancelAction()"></div>
+  <div class="modal-content">
+    <div class="modal-header" [class]="confirmationType">
+      <div class="modal-icon">
+        <i [class]="getConfirmationIcon()"></i>
+      </div>
+      <h4>{{getConfirmationTitle()}}</h4>
+    </div>
+    
+    <div class="modal-body">
+      <div class="player-summary" *ngIf="selectedPlayer">
+        <img [src]="selectedPlayer.imageUrl || 'assets/images/placeholder.png'" class="player-thumb">
+        <div class="player-info">
+          <h6>{{selectedPlayer.name}}</h6>
+          <p>{{selectedPlayer.code}} - {{selectedPlayer.playerLevel.code.toUpperCase()}}</p>
+        </div>
+      </div>
+      
+      <div class="confirmation-message">
+        <p>{{getConfirmationMessage()}}</p>
+        <div class="warning-note" *ngIf="confirmationType === 'delete'">
+          <i class="fas fa-exclamation-triangle"></i>
+          This action cannot be undone.
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" (click)="cancelAction()">Cancel</button>
+      <button class="btn" [class]="getConfirmationButtonClass()" 
+              (click)="confirmAction()" [disabled]="isProcessing">
+        <i class="fas fa-spinner fa-spin" *ngIf="isProcessing"></i>
+        {{getConfirmationButtonText()}}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Success Toast -->
+<div class="toast-container" *ngIf="showSuccessToast">
+  <div class="toast success">
+    <div class="toast-content">
+      <i class="fas fa-check-circle"></i>
+      <span>{{successMessage}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Error Toast -->
+<div class="toast-container" *ngIf="showErrorToast">
+  <div class="toast error">
+    <div class="toast-content">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{errorMessage}}</span>
+    </div>
+  </div>
+</div>

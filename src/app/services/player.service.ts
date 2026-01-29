@@ -88,6 +88,29 @@ export class PlayerService {
     );
   }
 
+  // CRUD operations for Player Master
+  createPlayer(player: Player): Observable<Player> {
+    return this.httpClient.post<PlayerResponse>(PLAYERS_URL, player).pipe(
+      map(response => response.data.item)
+    );
+  }
+
+  updatePlayer(id: number, player: Player): Observable<Player> {
+    return this.httpClient.put<PlayerResponse>(`${PLAYERS_URL}/${id}`, player).pipe(
+      map(response => response.data.item)
+    );
+  }
+
+  deletePlayer(id: number): Observable<any> {
+    return this.httpClient.delete(`${PLAYERS_URL}/${id}`);
+  }
+
+  getPlayerById(id: number): Observable<Player> {
+    return this.httpClient.get<PlayerResponse>(`${PLAYERS_URL}/${id}`).pipe(
+      map(response => response.data.item)
+    );
+  }
+
 }
 
 interface GetResponse {
@@ -123,5 +146,11 @@ interface PlayerLevesResponse {
 interface PlayerTeamInfosResponse {
   data: {
     items: PlayerTeamInfo[];
+  }
+}
+
+interface PlayerResponse {
+  data: {
+    item: Player;
   }
 }

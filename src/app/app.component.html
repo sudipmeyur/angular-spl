@@ -3,7 +3,7 @@
   <aside class="menu-sidebar d-none d-lg-block">
     <div class="logo">
       <a href="#">
-        <img src="assets/images/logo.png" alt="SPL" class="img-responsive">
+        <img src="external-images/images/logo.png" alt="SPL" class="img-responsive">
       </a>
     </div>
     <div class="menu-sidebar-content js-scrollbar1">
@@ -37,6 +37,15 @@
                   {{ teamSeason.team.name }}
                 </a>
               </li>
+            </ul>
+          </li>
+          <li class="has-sub">
+            <a class="js-arrow" href="#" (click)="toggleMasterMenu($event)" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>Master</span>
+              <i class="fa fa-chevron-right" id="master-arrow" style="font-size: 12px;"></i>
+            </a>
+            <ul class="list-unstyled navbar-mobile-sub__list navbar-sidebar-submenu" id="master-submenu" style="display: none; padding-left: 30px; border-top: 0.2px solid #ced4da;">
+              <li><a routerLink="/player-master" routerLinkActive="active">Player</a></li>
             </ul>
           </li>
           <li style="border-top: 0.2px solid #ced4da; margin-top: 5px; padding-top: 5px;">

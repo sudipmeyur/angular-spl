@@ -64,7 +64,10 @@ export class AppComponent implements OnInit {
     }
   }
 
-  
+  toggleMasterMenu(event: Event) {
+    event.preventDefault();
+    this.toggleSubmenu('master-submenu', 'master-arrow');
+  }
 
   toggleAuctionMenu(event: Event) {
     event.preventDefault();

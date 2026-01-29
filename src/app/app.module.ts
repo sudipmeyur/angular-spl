@@ -14,6 +14,7 @@ import { Routes,RouterModule } from '@angular/router';
 import { PlayerUnsoldComponent } from './components/player-unsold/player-unsold.component';
 import { AuctionModifyComponent } from './components/auction-modify/auction-modify.component';
 import { UiOverlayComponent } from './components/layout/ui-overlay/ui-overlay.component';
+import { PlayerComponent } from './components/master/player/player.component';
 
 
 const routes:Routes = [
@@ -23,6 +24,7 @@ const routes:Routes = [
   {path:'auction-modify',component: AuctionModifyComponent},
   {path:'team-squad/:id',component: TeamSquadComponent},
   {path:'dashboard',component: DashboardComponent},
+  {path:'player-master',component: PlayerComponent},
   {path:'',redirectTo:'/dashboard', pathMatch:'full'},
   {path:'**',redirectTo:'/dashboard', pathMatch:'full'}
 ];
@@ -36,7 +38,8 @@ const routes:Routes = [
     DashboardComponent,
     PlayerUnsoldComponent,
     AuctionModifyComponent,
-    UiOverlayComponent
+    UiOverlayComponent,
+    PlayerComponent
   ],
   imports: [
     RouterModule.forRoot(routes),

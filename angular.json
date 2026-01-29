@@ -20,7 +20,12 @@
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "C:/Users/SUDIP MEYUR/ProjectsPhysicalFolder/spl/spl-frontend/assetsExternal",
+                "output": "/external-images/"
+              }
             ],
             "allowedCommonJsDependencies": [
               "lodash",
