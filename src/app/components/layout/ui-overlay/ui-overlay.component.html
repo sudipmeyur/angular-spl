@@ -9,35 +9,37 @@
 </div>
 
 <!-- Confirmation Modal -->
-<div class="confirmation-modal-wrapper" *ngIf="showConfirmation">
+<div class="confirmation-modal" *ngIf="showConfirmation">
   <div class="modal-backdrop" (click)="cancelAction()"></div>
-  <div class="modal-content-wrapper">
-    <div class="modal-content" [class]="'modal-' + confirmationConfig.type">
-      <div class="modal-header">
-        <div class="modal-icon">
-          <i [class]="confirmationConfig.icon"></i>
+  <div class="modal-content">
+    <div class="modal-header" [class]="confirmationConfig.type">
+      <div class="modal-icon">
+        <i [class]="confirmationConfig.icon"></i>
+      </div>
+      <h4>{{confirmationConfig.title}}</h4>
+    </div>
+    
+    <div class="modal-body">
+      <div class="confirmation-message">
+        <p>{{confirmationConfig.message}}</p>
+        <div class="warning-note" *ngIf="confirmationConfig.type === 'danger'">
+          <i class="fas fa-exclamation-triangle"></i>
+          This action cannot be undone.
         </div>
-        <h4 class="modal-title">{{ confirmationConfig.title }}</h4>
       </div>
-
-      <div class="modal-body">
-        <p class="modal-message">{{ confirmationConfig.message }}</p>
-      </div>
-
-      <div class="modal-footer">
-        <button 
-          class="btn btn-secondary" 
-          (click)="cancelAction()"
-          *ngIf="confirmationConfig.cancelText">
-          {{ confirmationConfig.cancelText }}
-        </button>
-        <button 
-          class="btn" 
-          [class]="getConfirmationButtonClass()"
-          (click)="confirmAction()">
-          {{ confirmationConfig.confirmText }}
-        </button>
-      </div>
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn btn-secondary" 
+              (click)="cancelAction()"
+              *ngIf="confirmationConfig.cancelText">
+        {{confirmationConfig.cancelText}}
+      </button>
+      <button class="btn" 
+              [class]="getConfirmationButtonClass()" 
+              (click)="confirmAction()">
+        {{confirmationConfig.confirmText}}
+      </button>
     </div>
   </div>
 </div>
@@ -45,11 +47,32 @@
 <!-- Toast Notifications -->
 <div class="toast-container" *ngIf="currentToast">
   <div class="toast" [class]="getToastClass()">
-    <div class="toast-icon">
-      <i [class]="getToastIcon()"></i>
+    <div class="toast-header" *ngIf="currentToast.title">
+      <div class="toast-icon">
+        <i [class]="currentToast.icon || getToastIcon()"></i>
+      </div>
+      <div class="toast-title">{{ currentToast.title }}</div>
+      <button class="toast-close" (click)="closeToast()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
     <div class="toast-content">
-      <p class="toast-message">{{ currentToast.message }}</p>
+      <div class="toast-icon" *ngIf="!currentToast.title">
+        <i [class]="currentToast.icon || getToastIcon()"></i>
+      </div>
+      <div class="toast-body">
+        <p class="toast-message">{{ currentToast.message }}</p>
+        <button class="toast-action" 
+                *ngIf="currentToast.action"
+                (click)="executeToastAction()">
+          {{ currentToast.action.text }}
+        </button>
+      </div>
+      <button class="toast-close" 
+              *ngIf="!currentToast.title"
+              (click)="closeToast()">
+        <i class="fas fa-times"></i>
+      </button>
     </div>
   </div>
 </div>

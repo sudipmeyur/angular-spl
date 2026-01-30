@@ -48,7 +48,13 @@ export class UiOverlayComponent implements OnInit {
 
     // Subscribe to toast notifications
     this.uiService.toast$.subscribe(toast => {
+      console.log('UiOverlayComponent: Toast subscription received:', toast);
       this.currentToast = toast;
+      if (toast) {
+        console.log('UiOverlayComponent: Toast is now visible with message:', toast.message);
+      } else {
+        console.log('UiOverlayComponent: Toast is now hidden');
+      }
     });
   }
 
@@ -83,6 +89,10 @@ export class UiOverlayComponent implements OnInit {
   }
 
   getToastIcon(): string {
+    if (this.currentToast?.icon) {
+      return this.currentToast.icon;
+    }
+    
     const iconMap = {
       'success': 'fas fa-check-circle',
       'error': 'fas fa-exclamation-circle',
@@ -90,5 +100,19 @@ export class UiOverlayComponent implements OnInit {
       'warning': 'fas fa-exclamation-triangle'
     };
     return iconMap[this.currentToast?.type || 'info'];
+  }
+
+  closeToast(): void {
+    console.log('UiOverlayComponent: closeToast() called');
+    this.uiService.hideToast();
+  }
+
+  executeToastAction(): void {
+    console.log('UiOverlayComponent: executeToastAction() called');
+    if (this.currentToast?.action) {
+      console.log('UiOverlayComponent: Executing toast action:', this.currentToast.action.text);
+      this.currentToast.action.callback();
+      this.closeToast();
+    }
   }
 }

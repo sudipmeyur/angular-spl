@@ -14,6 +14,12 @@ export interface ToastConfig {
   message: string;
   type: 'success' | 'error' | 'info' | 'warning';
   duration?: number;
+  title?: string;
+  icon?: string;
+  action?: {
+    text: string;
+    callback: () => void;
+  };
 }
 
 @Injectable({
@@ -166,44 +172,86 @@ export class UiService {
   /**
    * Show success toast
    */
-  showSuccess(message: string, duration: number = 5000): void {
+  showSuccess(message: string, duration: number = 4000, title?: string): void {
     this.showToast({
       message,
       type: 'success',
-      duration
+      duration,
+      title,
+      icon: 'fas fa-check-circle'
     });
   }
 
   /**
    * Show error toast
    */
-  showError(message: string, duration: number = 5000): void {
+  showError(message: string, duration: number = 6000, title?: string): void {
+    console.log('UiService.showError called:', { message, duration, title });
     this.showToast({
       message,
       type: 'error',
-      duration
+      duration,
+      title,
+      icon: 'fas fa-exclamation-circle'
     });
   }
 
   /**
    * Show info toast
    */
-  showInfo(message: string, duration: number = 5000): void {
+  showInfo(message: string, duration: number = 4000, title?: string): void {
     this.showToast({
       message,
       type: 'info',
-      duration
+      duration,
+      title,
+      icon: 'fas fa-info-circle'
     });
   }
 
   /**
    * Show warning toast
    */
-  showWarning(message: string, duration: number = 5000): void {
+  showWarning(message: string, duration: number = 5000, title?: string): void {
     this.showToast({
       message,
       type: 'warning',
-      duration
+      duration,
+      title,
+      icon: 'fas fa-exclamation-triangle'
+    });
+  }
+
+  /**
+   * Show toast with action button
+   */
+  showToastWithAction(
+    message: string,
+    type: 'success' | 'error' | 'info' | 'warning',
+    actionText: string,
+    actionCallback: () => void,
+    duration: number = 8000,
+    title?: string
+  ): void {
+    console.log('UiService.showToastWithAction called:', { message, type, actionText, duration, title });
+    
+    const iconMap = {
+      'success': 'fas fa-check-circle',
+      'error': 'fas fa-exclamation-circle',
+      'info': 'fas fa-info-circle',
+      'warning': 'fas fa-exclamation-triangle'
+    };
+
+    this.showToast({
+      message,
+      type,
+      duration,
+      title,
+      icon: iconMap[type],
+      action: {
+        text: actionText,
+        callback: actionCallback
+      }
     });
   }
 
@@ -211,6 +259,8 @@ export class UiService {
    * Show generic toast
    */
   private showToast(config: ToastConfig): void {
+    console.log('UiService.showToast called with config:', config);
+    
     // Clear existing timeout
     if (this.toastTimeoutId) {
       clearTimeout(this.toastTimeoutId);
@@ -218,12 +268,15 @@ export class UiService {
 
     // Set default duration
     const duration = config.duration || 5000;
+    console.log('Toast duration set to:', duration);
 
     // Show toast
     this.toastSubject.next(config);
+    console.log('Toast subject updated, current value:', this.toastSubject.value);
 
     // Auto-hide after duration
     this.toastTimeoutId = setTimeout(() => {
+      console.log('Auto-hiding toast after', duration, 'ms');
       this.hideToast();
     }, duration);
   }

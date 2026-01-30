@@ -163,7 +163,7 @@ export class TeamSquadComponent implements OnInit {
   }
 
   getDefaultPlayerImage(): string {
-    return 'assets/images/placeholder.png';
+    return 'external-images/images/placeholder.png';
   }
 
   onImageError(event: any): void {

@@ -42,7 +42,7 @@
     <div class="col-md-3">
       <div class="section-box-inner border border-warning h-100 d-flex flex-column p-2" style="border-width: 2px !important;">
         <div class="player-image-container">
-          <img [src]="displayedPlayer?.imageUrl || 'assets/images/placeholder.png'" alt="Player Image" class="img-fluid player-image">
+          <img [src]="displayedPlayer?.imageUrl || 'external-images/images/placeholder.png'" alt="Player Image" class="img-fluid player-image">
           <div class="player-type-icon position-absolute">
             <i class="fas fa-baseball-bat" title="Player Type"></i>
           </div>
@@ -86,7 +86,7 @@
               <div class="dropdown-selected" (click)="toggleDropdown()">
                 <div *ngIf="selectedTeamSeason; else placeholder" class="team-option" style="padding: 0; width: 100%;">
                   <div class="team-name-container">
-                    <img [src]="selectedTeamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
+                    <img [src]="selectedTeamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
                     <span>{{selectedTeamSeason.team.name}}</span>
                   </div>
                   <small class="team-stats">
@@ -105,7 +105,7 @@
                      class="team-option" 
                      (click)="selectTeamSeason(teamSeason)">
                   <div class="team-name-container">
-                    <img [src]="teamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
+                    <img [src]="teamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
                     <span>{{teamSeason.team.name}}</span>
                   </div>
                   <small class="team-stats">
@@ -135,7 +135,7 @@
                       </div>
                     </div>
                     <div class="card-back">
-                      <img [src]="card.teamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" 
+                      <img [src]="card.teamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" 
                            alt="Team Logo" class="card-team-logo">
                       <span class="card-team-name">{{card.teamSeason.team.name}}</span>
                     </div>
@@ -161,7 +161,7 @@
               
               <div *ngIf="selectedTeamSeason && hasSelectedCard" class="selected-team-display">
                 <div class="alert alert-success d-flex align-items-center">
-                  <img [src]="selectedTeamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" 
+                  <img [src]="selectedTeamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" 
                        alt="Team Logo" class="team-logo me-2">
                   <span><strong>Selected:</strong> {{selectedTeamSeason.team.name}}</span>
                   <small class="team-stats ms-auto">
@@ -235,7 +235,7 @@
         <div class="team-budget-list">
           <div *ngFor="let teamSeason of teamSeasons" class="team-budget-item mb-2">
             <div class="d-flex align-items-center mb-2">
-              <img [src]="teamSeason.team.logoUrl || 'assets/images/team-placeholder.png'" 
+              <img [src]="teamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" 
                    alt="Team Logo" class="team-logo-medium me-3">
               <span class="team-name-large">{{teamSeason.team.name}}</span>
               <span class="ms-auto percentage-large">{{getProgressPercentage(teamSeason) | number:'1.0-0'}}%</span>
@@ -254,4 +254,7 @@
     </div>
   </div>
 </div>
+
+<!-- Shared Toast Component -->
+<app-shared-toast></app-shared-toast>
 

@@ -10,7 +10,7 @@
                     "isRtmUsed": false,
                     "player": {
                         "code": "pl3",
-                        "imageUrl": "assets/images/players/1002.png",
+                        "imageUrl": "external-images/images/players/1002.png",
                         "name": "Bittu Roy",
                         "playerLevel": {
                             "code": "l2"
@@ -23,7 +23,7 @@
                     "isRtmUsed": false,
                     "player": {
                         "code": "pl6",
-                        "imageUrl": "assets/images/players/1005.png",
+                        "imageUrl": "external-images/images/players/1005.png",
                         "name": "Subhasis Mondal",
                         "playerLevel": {
                             "code": "l2"
@@ -40,7 +40,7 @@
             },
             "team": {
                 "code": "tm1",
-                "logoUrl": "assets/images/teams/supreme-power.png",
+                "logoUrl": "external-images/images/teams/supreme-power.png",
                 "name": "Supreme Power"
             },
             "teamSeasonPlayerLevels": [

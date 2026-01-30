@@ -3,6 +3,8 @@ import { PlayerLevel } from '../../common/player-level';
 import { Team } from '../../common/team';
 import { PlayerService } from '../../services/player.service';
 import { SeasonService } from '../../services/season.service';
+import { UiService } from '../../services/ui.service';
+import { ToastService } from '../../services/toast.service';
 import { Season } from '../../common/season';
 import { TeamSeason } from '../../common/team-season';
 import { PlayerTeamInfo } from '../../common/player-team-info';
@@ -23,20 +25,9 @@ export class AuctionModifyComponent implements OnInit {
   
   // Pagination state
   currentPage: number = 1;
-  itemsPerPage: number = 20; // Configurable items per page
+  itemsPerPage: number = 20;
   totalPages: number = 1;
   
-  // Confirmation modal state
-  showConfirmation: boolean = false;
-  confirmationType: 'release' | 'unmark' = 'release';
-  isProcessing: boolean = false;
-  
-  // Toast notifications
-  showSuccessToast: boolean = false;
-  successMessage: string = '';
-  showErrorToast: boolean = false;
-  errorMessage: string = '';
-
   // Loading state
   isLoading: boolean = true;
   loadingError: string = '';
@@ -51,7 +42,13 @@ export class AuctionModifyComponent implements OnInit {
   filteredPlayers: PlayerTeamInfo[] = [];
   paginatedPlayers: PlayerTeamInfo[] = []; // Players for current page
 
-  constructor(private playerService: PlayerService, private seasonService: SeasonService, private cdr: ChangeDetectorRef) { }
+  constructor(
+    private playerService: PlayerService, 
+    private seasonService: SeasonService, 
+    private uiService: UiService,
+    private toastService: ToastService,
+    private cdr: ChangeDetectorRef
+  ) { }
 
   ngOnInit(): void {
     this.seasonService.currentSeason$.subscribe(season => {
@@ -291,154 +288,90 @@ export class AuctionModifyComponent implements OnInit {
     this.playerLevels = [...this.playerLevels];
   }
 
-  // Confirmation modal methods
+  // Confirmation methods using global UiService
   showReleaseConfirmation(): void {
-    console.log('Release confirmation modal triggered');
-    this.confirmationType = 'release';
-    this.showConfirmation = true;
+    if (!this.selectedPlayer) return;
+    
+    this.uiService.showConfirmation(
+      {
+        title: 'Release Player',
+        message: `Are you sure you want to release ${this.selectedPlayer.player.name} from ${this.getPlayerTeam(this.selectedPlayer)?.name}?`,
+        icon: 'fas fa-user-times',
+        type: 'danger',
+        confirmText: 'Release Player',
+        cancelText: 'Cancel'
+      },
+      () => this.releasePlayer()
+    );
   }
 
   showUnmarkConfirmation(): void {
-    console.log('Unmark confirmation modal triggered');
-    this.confirmationType = 'unmark';
-    this.showConfirmation = true;
+    if (!this.selectedPlayer) return;
+    
+    this.uiService.showConfirmation(
+      {
+        title: 'Unmark Player',
+        message: `Are you sure you want to unmark ${this.selectedPlayer.player.name} as unsold?`,
+        icon: 'fas fa-undo',
+        type: 'warning',
+        confirmText: 'Unmark Player',
+        cancelText: 'Cancel'
+      },
+      () => this.unmarkPlayer()
+    );
   }
 
-  cancelAction(): void {
-    console.log('Cancel action triggered');
-    this.showConfirmation = false;
-    this.isProcessing = false;
-  }
-
-  confirmAction(): void {
-    if (!this.selectedPlayer) {
-      console.warn('No player selected for confirmation action');
+  private releasePlayer(): void {
+    if (!this.selectedPlayer) return;
+    
+    const playerTeamCode = this.selectedPlayer.teamInfo?.playerTeamCode;
+    
+    if (!playerTeamCode) {
+      this.uiService.showError('Unable to determine player team code for release');
       return;
     }
 
-    this.isProcessing = true;
-
-    if (this.confirmationType === 'release') {
-      // Use revertPlayerAuction to release a player from team
-      const playerTeamCode = this.selectedPlayer.teamInfo?.playerTeamCode;
-      
-      console.log('Release action initiated for player:', this.selectedPlayer.player.name);
-      console.log('Player team code:', playerTeamCode);
-      
-      if (!playerTeamCode) {
-        console.error('Unable to determine player team code for release');
-        this.showErrorMessage('Unable to determine player team code for release');
-        this.isProcessing = false;
-        this.showConfirmation = false;
-        return;
-      }
-
-      this.playerService.revertPlayerTeam(playerTeamCode).subscribe({
-        next: (response) => {
-          console.log('Player released successfully:', response);
-          this.isProcessing = false;
-          this.showConfirmation = false;
-          this.closePanel();
-          this.loadAuctionResultPlayers(this.currentSeason!.id);
-          this.showSuccessMessage('Player released successfully');
-        },
-        error: (error) => {
-          console.error('Error releasing player:', error);
-          const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
-          this.showErrorMessage('Failed to release player: ' + errorMsg);
-          this.isProcessing = false;
-          this.showConfirmation = false;
-        }
-      });
-    } else {
-      // Use revertUnsoldPlayer to unmark a player as unsold
-      const unsoldPlayerId = this.selectedPlayer.unsoldPlayerId;
-      
-      console.log('Unmark action initiated for player:', this.selectedPlayer.player.name);
-      console.log('Unsold player ID:', unsoldPlayerId);
-      
-      if (!unsoldPlayerId) {
-        console.error('Unable to determine unsold player ID for unmark');
-        this.showErrorMessage('Unable to determine unsold player ID for unmark');
-        this.isProcessing = false;
-        this.showConfirmation = false;
-        return;
-      }
-
-      console.log('Calling revertUnsoldPlayer with ID:', unsoldPlayerId.toString());
-      
-      this.playerService.revertUnsoldPlayer(unsoldPlayerId.toString()).subscribe({
-        next: (response) => {
-          console.log('Player unmarked successfully:', response);
-          this.isProcessing = false;
-          this.showConfirmation = false;
-          this.closePanel();
-          this.loadAuctionResultPlayers(this.currentSeason!.id);
-          this.showSuccessMessage('Player unmarked successfully');
-        },
-        error: (error) => {
-          console.error('Error unmarking player:', error);
-          console.error('Error status:', error?.status);
-          console.error('Error message:', error?.message);
-          console.error('Error response:', error?.error);
-          const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
-          this.showErrorMessage('Failed to unmark player: ' + errorMsg);
-          this.isProcessing = false;
-          this.showConfirmation = false;
-        }
-      });
-    }
-  }
-
-  private showSuccessMessage(message?: string): void {
-    this.successMessage = message || 'Operation completed successfully';
-    this.showSuccessToast = true;
-    this.showErrorToast = false; // Hide error if success
-    this.cdr.detectChanges(); // Force change detection
-    setTimeout(() => {
-      this.showSuccessToast = false;
-      this.cdr.detectChanges();
-    }, 5000);
-  }
-
-  private showErrorMessage(message?: string): void {
-    this.errorMessage = message || 'An error occurred';
-    this.showErrorToast = true;
-    this.showSuccessToast = false; // Hide success if error
-    this.cdr.detectChanges(); // Force change detection
-    setTimeout(() => {
-      this.showErrorToast = false;
-      this.cdr.detectChanges();
-    }, 5000);
-  }
-
-  // Confirmation modal helpers
-  getConfirmationTitle(): string {
-    return this.confirmationType === 'release' ? 'Release Player' : 'Unmark Player';
-  }
-
-  getConfirmationMessage(): string {
-    if (!this.selectedPlayer) return '';
+    this.uiService.showProcessing('Releasing player...');
     
-    if (this.confirmationType === 'release') {
-      return `Are you sure you want to release ${this.selectedPlayer.player.name} from ${this.getPlayerTeam(this.selectedPlayer)?.name}?`;
-    } else {
-      return `Are you sure you want to unmark ${this.selectedPlayer.player.name} as unsold?`;
+    this.playerService.revertPlayerTeam(playerTeamCode).subscribe({
+      next: () => {
+        this.uiService.hideProcessing();
+        this.closePanel();
+        this.loadAuctionResultPlayers(this.currentSeason!.id);
+        this.toastService.showSuccess('Player released successfully');
+      },
+      error: (error) => {
+        this.uiService.hideProcessing();
+        const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+        this.toastService.showError('Failed to release player: ' + errorMsg);
+      }
+    });
+  }
+
+  private unmarkPlayer(): void {
+    if (!this.selectedPlayer) return;
+    
+    const unsoldPlayerId = this.selectedPlayer.unsoldPlayerId;
+    
+    if (!unsoldPlayerId) {
+      this.uiService.showError('Unable to determine unsold player ID for unmark');
+      return;
     }
-  }
 
-  getConfirmationIcon(): string {
-    return this.confirmationType === 'release' ? 'fas fa-user-times' : 'fas fa-undo';
-  }
-
-  getConfirmationButtonClass(): string {
-    return this.confirmationType === 'release' ? 'btn-danger' : 'btn-warning';
-  }
-
-  getConfirmationButtonText(): string {
-    if (this.isProcessing) {
-      return this.confirmationType === 'release' ? 'Releasing...' : 'Unmarking...';
-    }
-    return this.confirmationType === 'release' ? 'Release Player' : 'Unmark Player';
+    this.uiService.showProcessing('Unmarking player...');
+    
+    this.playerService.revertUnsoldPlayer(unsoldPlayerId.toString()).subscribe({
+      next: () => {
+        this.uiService.hideProcessing();
+        this.closePanel();
+        this.loadAuctionResultPlayers(this.currentSeason!.id);
+        this.toastService.showSuccess('Player unmarked successfully');
+      },
+      error: (error) => {
+        this.uiService.hideProcessing();
+        const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+        this.toastService.showError('Failed to unmark player: ' + errorMsg);
+      }
+    });
   }
 }

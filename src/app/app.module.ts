@@ -15,6 +15,7 @@ import { PlayerUnsoldComponent } from './components/player-unsold/player-unsold.
 import { AuctionModifyComponent } from './components/auction-modify/auction-modify.component';
 import { UiOverlayComponent } from './components/layout/ui-overlay/ui-overlay.component';
 import { PlayerComponent } from './components/master/player/player.component';
+import { SharedToastComponent } from './components/shared/shared-toast/shared-toast.component';
 
 
 const routes:Routes = [
@@ -39,7 +40,8 @@ const routes:Routes = [
     PlayerUnsoldComponent,
     AuctionModifyComponent,
     UiOverlayComponent,
-    PlayerComponent
+    PlayerComponent,
+    SharedToastComponent
   ],
   imports: [
     RouterModule.forRoot(routes),

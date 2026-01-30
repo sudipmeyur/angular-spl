@@ -465,9 +465,9 @@ body::before {
 
 /* Image Loading States */
 .player-image[src=""], 
-.player-image[src="assets/images/placeholder.png"],
+.player-image[src="external-images/images/placeholder.png"],
 .team-logo[src=""],
-.team-logo[src="assets/images/placeholder.png"] {
+.team-logo[src="external-images/images/placeholder.png"] {
   background: rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
@@ -475,9 +475,9 @@ body::before {
 }
 
 .player-image[src=""]:before,
-.player-image[src="assets/images/placeholder.png"]:before,
+.player-image[src="external-images/images/placeholder.png"]:before,
 .team-logo[src=""]:before,
-.team-logo[src="assets/images/placeholder.png"]:before {
+.team-logo[src="external-images/images/placeholder.png"]:before {
   content: "👤";
   font-size: 2rem;
   color: rgba(255, 215, 0, 0.5);

@@ -5,7 +5,7 @@
     "player": {
         "code": "pl1",
         "id": 1,
-        "imageUrl": "assets/images/players/1000.png",
+        "imageUrl": "external-images/images/players/1000.png",
         "name": "Sudip Meyur",
         "playerLevel": {
             "baseAmount": 3.00,

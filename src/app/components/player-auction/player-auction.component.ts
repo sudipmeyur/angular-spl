@@ -8,6 +8,7 @@ import { SeasonService } from 'src/app/services/season.service';
 import { Season } from 'src/app/common/season';
 import { PlayerLevel } from 'src/app/common/player-level';
 import { UiService } from 'src/app/services/ui.service';
+import { ToastService } from 'src/app/services/toast.service';
 
 interface ShuffleCard {
   teamSeason: TeamSeason;
@@ -63,6 +64,8 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     isRtmUsed: false
   };
 
+  currentToast: any = null;
+  showToast: boolean = false;
   maxPlayerBudget: number | null = null;
   nextPlayerBudget: number | null = null;
 
@@ -72,10 +75,16 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     private el: ElementRef,
     private renderer: Renderer2,
     private route: ActivatedRoute,
-    private uiService: UiService
+    private uiService: UiService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
+    // Subscribe to toast for direct display
+    this.uiService.toast$.subscribe(toast => {
+      this.currentToast = toast;
+    });
+    
     this.seasonService.currentSeason$.subscribe(season => {
       if (season) {
         this.currentSeason = season;
@@ -527,9 +536,11 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
         this.playerService.savePlayerTeam(request).subscribe(
           () => {
-            console.log('saveSoldPlayer: API call successful');
             this.uiService.hideProcessing();
-            this.uiService.showSuccess('Player saved successfully!');
+            
+            // Show success toast
+            this.toastService.showSuccess(`${this.selectedPlayer?.name} sold to ${this.selectedTeamSeason?.team.name} for ₹${this.playerForm.amount}`);
+            
             this.resetFormData();
             this.closeEnvelope();
             this.clearPlayerSelection();
@@ -537,9 +548,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
             this.loadTeamSeasons();
           },
           error => {
-            console.error('saveSoldPlayer: API call failed', error);
             this.uiService.hideProcessing();
-            this.uiService.showError('Error saving player: ' + error.message);
+            
+            // Show error toast
+            this.toastService.showError(`Failed to save ${this.selectedPlayer?.name}. Please try again.`);
           }
         );
       }
@@ -583,7 +595,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
         this.playerService.saveUnsoldPlayer(request).subscribe(
           () => {
             this.uiService.hideProcessing();
-            this.uiService.showSuccess('Player marked as unsold successfully!');
+            
+            // Show success toast
+            this.toastService.showSuccess(`${this.selectedPlayer?.name} marked as unsold`);
+            
             this.resetFormData();
             this.closeEnvelope();
             this.clearPlayerSelection();
@@ -592,7 +607,9 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
           },
           error => {
             this.uiService.hideProcessing();
-            this.uiService.showError('Error saving player: ' + error.message);
+            
+            // Show error toast
+            this.toastService.showError(`Failed to mark ${this.selectedPlayer?.name} as unsold. Please try again.`);
           }
         );
       }
@@ -944,6 +961,47 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       console.warn(
         `No matching player level found for ${this.currentPlayerLevelCode} in team ${teamSeason.team.name}`
       );
+    }
+  }
+
+  testToast() {
+    console.log('Test toast button clicked');
+    this.uiService.showSuccess('This is a test toast message!', 5000, 'Test Toast');
+  }
+
+  hideToast() {
+    this.showToast = false;
+    this.currentToast = null;
+  }
+
+  getToastClass(): string {
+    const typeMap: { [key: string]: string } = {
+      'success': 'toast-success',
+      'error': 'toast-error',
+      'info': 'toast-info',
+      'warning': 'toast-warning'
+    };
+    return typeMap[this.currentToast?.type || 'info'];
+  }
+
+  getToastIcon(): string {
+    if (this.currentToast?.icon) {
+      return this.currentToast.icon;
+    }
+    
+    const iconMap: { [key: string]: string } = {
+      'success': 'fas fa-check-circle',
+      'error': 'fas fa-exclamation-circle',
+      'info': 'fas fa-info-circle',
+      'warning': 'fas fa-exclamation-triangle'
+    };
+    return iconMap[this.currentToast?.type || 'info'];
+  }
+
+  executeToastAction(): void {
+    if (this.currentToast?.action) {
+      this.currentToast.action.callback();
+      this.hideToast();
     }
   }
 }

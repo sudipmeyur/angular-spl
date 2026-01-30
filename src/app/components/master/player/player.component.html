@@ -72,8 +72,20 @@
         </button>
       </div>
       <div class="action-controls">
-        <button class="btn btn-primary" (click)="createNewPlayer()">
+        <!-- Debug button to test click events -->
+        <button class="btn btn-secondary me-2" 
+                (click)="testClick()" 
+                title="Test Click"
+                [disabled]="isLoading">
+          <i class="fas fa-bug"></i> Test
+        </button>
+        <button class="btn btn-primary" 
+                (click)="createNewPlayer()" 
+                title="Add New Player"
+                [disabled]="isLoading"
+                type="button">
           <i class="fas fa-plus"></i> Add Player
+          <span *ngIf="isLoading"> (Loading...)</span>
         </button>
       </div>
     </div>
@@ -245,7 +257,7 @@
       <!-- Player Info Section -->
       <div class="player-info-section">
         <div class="player-image-container">
-          <img [src]="selectedPlayer.imageUrl || 'assets/images/placeholder.png'" 
+          <img [src]="selectedPlayer.imageUrl || 'external-images/images/placeholder.png'" 
                alt="{{selectedPlayer.name}}" class="player-image-large">
           <div class="player-level-badge">{{selectedPlayer.playerLevel.code.toUpperCase()}}</div>
         </div>
@@ -364,7 +376,7 @@
                     <h6><i class="fas fa-info-circle"></i> Manual Upload Required</h6>
                     <ol>
                       <li>Save this image as: <code>{{ suggestedFileName }}</code></li>
-                      <li>Copy the file to: <code>src/assets/images/players/</code></li>
+                      <li>Copy the file to: <code>src/external-images/images/players/</code></li>
                       <li>The image will be available at: <code>{{ getAssetPath() }}</code></li>
                     </ol>
                     <button type="button" 
@@ -388,7 +400,7 @@
                          placeholder="Enter image URL or asset path"
                          (input)="onImageUrlChange()">
                   <div class="form-help">
-                    <small>Enter a full URL or asset path like: assets/images/players/player-name.jpg</small>
+                    <small>Enter a full URL or asset path like: external-images/images/players/player-name.jpg</small>
                   </div>
                 </div>
               </div>
@@ -414,16 +426,16 @@
               </div>
             </div>
             <div class="form-group">
-              <label for="playerCode" class="form-label required">Player Code</label>
+              <label for="playerCode" class="form-label">Player Code</label>
               <input type="text" 
                      id="playerCode" 
                      name="playerCode" 
                      class="form-control" 
                      [(ngModel)]="editForm.code" 
-                     required 
-                     placeholder="Enter player code">
-              <div class="invalid-feedback" *ngIf="playerForm.submitted && !editForm.code">
-                Player code is required
+                     readonly
+                     [placeholder]="isCreating ? 'Will be generated automatically' : 'Player code'">
+              <div class="form-help" *ngIf="isCreating">
+                <small class="text-muted">Player code will be generated automatically by the system</small>
               </div>
             </div>
           </div>
@@ -491,7 +503,7 @@
     
     <div class="modal-body">
       <div class="player-summary" *ngIf="selectedPlayer">
-        <img [src]="selectedPlayer.imageUrl || 'assets/images/placeholder.png'" class="player-thumb">
+        <img [src]="selectedPlayer.imageUrl || 'external-images/images/placeholder.png'" class="player-thumb">
         <div class="player-info">
           <h6>{{selectedPlayer.name}}</h6>
           <p>{{selectedPlayer.code}} - {{selectedPlayer.playerLevel.code.toUpperCase()}}</p>

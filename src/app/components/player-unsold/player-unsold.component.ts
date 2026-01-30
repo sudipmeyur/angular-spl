@@ -8,6 +8,7 @@ import { SeasonService } from 'src/app/services/season.service';
 import { Season } from 'src/app/common/season';
 import { UnsoldType } from 'src/app/common/unsold-type';
 import { UiService } from 'src/app/services/ui.service';
+import { ToastService } from 'src/app/services/toast.service';
 
 interface ShuffleCard {
   teamSeason: TeamSeason;
@@ -70,7 +71,8 @@ export class PlayerUnsoldComponent implements OnInit {
     private el: ElementRef,
     private renderer: Renderer2,
     private route: ActivatedRoute,
-    private uiService: UiService
+    private uiService: UiService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -137,7 +139,7 @@ export class PlayerUnsoldComponent implements OnInit {
       error => {
         console.error('API error:', error);
         this.uiService.hideProcessing();
-        this.uiService.showError('Failed to load players: ' + error.message);
+        this.toastService.showError('Failed to load players: ' + error.message);
       }
     );
   }
@@ -510,7 +512,7 @@ export class PlayerUnsoldComponent implements OnInit {
           () => {
             console.log('saveSoldPlayer: API call successful');
             this.uiService.hideProcessing();
-            this.uiService.showSuccess('Player saved successfully!');
+            this.toastService.showSuccess(`${this.selectedPlayer?.name} sold to ${this.selectedTeamSeason?.team.name} for ₹${this.playerForm.amount}`);
             this.resetFormData();
             this.closeEnvelope();
             this.clearPlayerSelection();
@@ -520,7 +522,7 @@ export class PlayerUnsoldComponent implements OnInit {
           error => {
             console.error('saveSoldPlayer: API call failed', error);
             this.uiService.hideProcessing();
-            this.uiService.showError('Error saving player: ' + error.message);
+            this.toastService.showError(`Failed to save ${this.selectedPlayer?.name}. Please try again.`);
           }
         );
       }

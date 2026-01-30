@@ -89,7 +89,7 @@
            [class.selected]="selectedPlayer && selectedPlayer.player.id === player.player.id"
            (click)="selectPlayer(player)">
         <div class="card-header">
-          <img [src]="player.player.imageUrl || 'assets/images/placeholder.png'" 
+          <img [src]="player.player.imageUrl || 'external-images/images/placeholder.png'" 
                alt="{{player.player.name}}" class="player-avatar">
           <div class="player-status-badge" [class]="getPlayerStatusClass(player)">
             {{getPlayerStatus(player)}}
@@ -100,7 +100,7 @@
           <p class="player-code">{{player.player.code}}</p>
           <div class="player-details" *ngIf="isPlayerSold(player)">
             <div class="team-info">
-              <img [src]="getPlayerTeam(player)?.logoUrl || 'assets/images/placeholder.png'" class="team-logo-small">
+              <img [src]="getPlayerTeam(player)?.logoUrl || 'external-images/images/placeholder.png'" class="team-logo-small">
               <span>{{getPlayerTeam(player)?.name || 'Unknown Team'}}</span>
             </div>
             <div class="amount-info">
@@ -140,7 +140,7 @@
               [class.selected]="selectedPlayer && selectedPlayer.player.id === player.player.id">
             <td>
               <div class="player-info-cell">
-                <img [src]="player.player.imageUrl || 'assets/images/placeholder.png'" 
+                <img [src]="player.player.imageUrl || 'external-images/images/placeholder.png'" 
                      class="player-avatar-small">
                 <span>{{player.player.name}}</span>
               </div>
@@ -153,7 +153,7 @@
             </td>
             <td>
               <div class="team-cell" *ngIf="isPlayerSold(player)">
-                <img [src]="getPlayerTeam(player)?.logoUrl || 'assets/images/placeholder.png'" class="team-logo-tiny">
+                <img [src]="getPlayerTeam(player)?.logoUrl || 'external-images/images/placeholder.png'" class="team-logo-tiny">
                 <span>{{getPlayerTeam(player)?.name || 'Unknown Team'}}</span>
               </div>
               <span *ngIf="!isPlayerSold(player)">-</span>
@@ -250,7 +250,7 @@
     <!-- Player Info Section -->
     <div class="player-info-section">
       <div class="player-image-container">
-        <img [src]="selectedPlayer.player.imageUrl || 'assets/images/placeholder.png'" 
+        <img [src]="selectedPlayer.player.imageUrl || 'external-images/images/placeholder.png'" 
              alt="{{selectedPlayer.player.name}}" class="player-image-large">
         <div class="player-level-badge">{{selectedPlayer.player.playerLevel.code.toUpperCase()}}</div>
       </div>
@@ -277,7 +277,7 @@
           <div class="detail-row">
             <span class="label">Team:</span>
             <div class="team-display">
-              <img [src]="getPlayerTeam(selectedPlayer)?.logoUrl || 'assets/images/placeholder.png'" class="team-logo-medium">
+              <img [src]="getPlayerTeam(selectedPlayer)?.logoUrl || 'external-images/images/placeholder.png'" class="team-logo-medium">
               <span>{{getPlayerTeam(selectedPlayer)?.name || 'Unknown Team'}}</span>
             </div>
           </div>
@@ -300,16 +300,14 @@
       <div class="action-buttons">
         <button class="btn btn-danger btn-lg" 
                 *ngIf="isPlayerSold(selectedPlayer)"
-                (click)="showReleaseConfirmation()"
-                [disabled]="isProcessing">
+                (click)="showReleaseConfirmation()">
           <i class="fas fa-user-times"></i>
           Release from Team
         </button>
         
         <button class="btn btn-warning btn-lg" 
                 *ngIf="isPlayerUnsold(selectedPlayer)"
-                (click)="showUnmarkConfirmation()"
-                [disabled]="isProcessing">
+                (click)="showUnmarkConfirmation()">
           <i class="fas fa-undo"></i>
           Unmark as Unsold
         </button>
@@ -318,62 +316,5 @@
   </div>
 </div>
 
-<!-- Confirmation Modal -->
-<div class="confirmation-modal" *ngIf="showConfirmation">
-  <div class="modal-backdrop" (click)="cancelAction()"></div>
-  <div class="modal-content">
-    <div class="modal-header" [class]="confirmationType">
-      <div class="modal-icon">
-        <i [class]="getConfirmationIcon()"></i>
-      </div>
-      <h4>{{getConfirmationTitle()}}</h4>
-    </div>
-    
-    <div class="modal-body">
-      <div class="player-summary" *ngIf="selectedPlayer">
-        <img [src]="selectedPlayer.player.imageUrl || 'assets/images/placeholder.png'" class="player-thumb">
-        <div class="player-info">
-          <h6>{{selectedPlayer.player.name}}</h6>
-          <p>{{selectedPlayer.player.code}} - {{selectedPlayer.player.playerLevel.code.toUpperCase()}}</p>
-        </div>
-      </div>
-      
-      <div class="confirmation-message">
-        <p>{{getConfirmationMessage()}}</p>
-        <div class="warning-note" *ngIf="confirmationType === 'release'">
-          <i class="fas fa-exclamation-triangle"></i>
-          This action will make the player available for auction again.
-        </div>
-      </div>
-    </div>
-    
-    <div class="modal-actions">
-      <button class="btn btn-secondary" (click)="cancelAction()">Cancel</button>
-      <button class="btn" [class]="getConfirmationButtonClass()" 
-              (click)="confirmAction()" [disabled]="isProcessing">
-        <i class="fas fa-spinner fa-spin" *ngIf="isProcessing"></i>
-        {{getConfirmationButtonText()}}
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Success Toast -->
-<div class="toast-container" *ngIf="showSuccessToast">
-  <div class="toast success">
-    <div class="toast-content">
-      <i class="fas fa-check-circle"></i>
-      <span>{{successMessage}}</span>
-    </div>
-  </div>
-</div>
-
-<!-- Error Toast -->
-<div class="toast-container" *ngIf="showErrorToast">
-  <div class="toast error">
-    <div class="toast-content">
-      <i class="fas fa-exclamation-circle"></i>
-      <span>{{errorMessage}}</span>
-    </div>
-  </div>
-</div>
+<!-- Shared Toast Component -->
+<app-shared-toast></app-shared-toast>
