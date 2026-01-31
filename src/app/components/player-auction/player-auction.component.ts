@@ -213,6 +213,22 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
           isSelectable = this.currentSeason.maxFreeAllowed > (teamSeason.totalFreeUsed || 0);
           console.log(`Team ${teamSeason.team.name}: free players ${teamSeason.totalFreeUsed || 0}/${this.currentSeason.maxFreeAllowed} - selectable: ${isSelectable}`);
         }
+        
+        // Filter out teams whose nextPlayerBudget is below current level base price
+        if(isSelectable && this.currentPlayerLevel && !this.currentPlayerLevel.isFree) {
+          const matchingLevel = teamSeason.teamSeasonPlayerLevels?.find(
+            level => level.playerLevel.code === this.currentPlayerLevelCode
+          );
+          if(matchingLevel && this.currentPlayerLevel.baseAmount) {
+            const nextBudget = matchingLevel.nextPlayerBudget || 0;
+            const baseAmount = this.currentPlayerLevel.baseAmount || 0;
+            if(nextBudget < baseAmount) {
+              isSelectable = false;
+              console.log(`Team ${teamSeason.team.name}: budget ${nextBudget} < base ${baseAmount} - filtered out`);
+            }
+          }
+        }
+        
         return isSelectable;
       }else{
         console.log('No current season available for filtering');
