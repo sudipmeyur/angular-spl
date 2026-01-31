@@ -1411,3 +1411,46 @@ body::before {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
 }
+
+/* Disabled Team Styles */
+.team-disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  background-color: rgba(108, 117, 125, 0.1) !important;
+  color: #6c757d !important;
+}
+
+.team-disabled:hover {
+  background-color: rgba(108, 117, 125, 0.1) !important;
+  color: #6c757d !important;
+}
+
+.team-disabled .team-name-container span {
+  color: #6c757d !important;
+}
+
+.team-disabled .team-stats {
+  color: #adb5bd !important;
+}
+
+/* Disabled Shuffle Card Styles */
+.shuffle-card.card-disabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+  filter: grayscale(70%);
+}
+
+.shuffle-card.card-disabled:hover {
+  transform: none !important;
+  filter: grayscale(70%);
+}
+
+.shuffle-card.card-disabled .card-front,
+.shuffle-card.card-disabled .card-back {
+  border-color: rgba(108, 117, 125, 0.3) !important;
+}
+
+.shuffle-card.card-disabled .card-back {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%) !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+}

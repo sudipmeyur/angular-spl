@@ -101,17 +101,20 @@
                 <i class="fas fa-chevron-down dropdown-arrow"></i>
               </div>
               <div class="dropdown-options" [class.show]="dropdownOpen">
-                <div *ngFor="let teamSeason of selectableTeamSeasons" 
+                <div *ngFor="let item of allTeamSeasonsWithStatus" 
                      class="team-option" 
-                     (click)="selectTeamSeason(teamSeason)">
+                     [class.team-disabled]="!item.isSelectable"
+                     [title]="item.reason || ''"
+                     (click)="item.isSelectable ? selectTeamSeason(item.teamSeason) : null">
                   <div class="team-name-container">
-                    <img [src]="teamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
-                    <span>{{teamSeason.team.name}}</span>
+                    <img [src]="item.teamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
+                    <span>{{item.teamSeason.team.name}}</span>
+                    <small *ngIf="!item.isSelectable" class="text-danger ms-2">({{item.reason}})</small>
                   </div>
                   <small class="team-stats">
-                    [<span *ngIf="teamSeason.isRtmEligible">rtm={{teamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; </span>
-                     free={{teamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
-                     player={{teamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
+                    [<span *ngIf="item.teamSeason.isRtmEligible">rtm={{item.teamSeason.totalRtmUsed || 0}}/{{currentSeason?.maxRtmAllowed || 0}}; </span>
+                     free={{item.teamSeason.totalFreeUsed || 0}}/{{currentSeason?.maxFreeAllowed || 0}}; 
+                     player={{item.teamSeason.totalPlayer || 0}}/{{currentSeason?.maxPlayersAllowed || 0}}]
                   </small>
                 </div>
               </div>
@@ -125,8 +128,10 @@
                      [class.flipped]="card.isFlipped"
                      [class.selected]="card.isSelected"
                      [class.shuffling]="isShuffling"
+                     [class.card-disabled]="!card.isSelectable"
                      [style.animation-delay.ms]="i * 100"
-                     (click)="selectCard(i)">
+                     [title]="!card.isSelectable ? card.reason : ''"
+                     (click)="card.isSelectable ? selectCard(i) : null">
                   <div class="card-inner">
                     <div class="card-front">
                       <div class="card-back-design">

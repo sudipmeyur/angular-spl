@@ -14,6 +14,14 @@ interface ShuffleCard {
   teamSeason: TeamSeason;
   isFlipped: boolean;
   isSelected: boolean;
+  isSelectable?: boolean;
+  reason?: string;
+}
+
+interface TeamSeasonWithStatus {
+  teamSeason: TeamSeason;
+  isSelectable: boolean;
+  reason?: string;
 }
 
 @Component({
@@ -33,6 +41,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   players: Player[] = [];
   teamSeasons: TeamSeason[] = [];
   selectableTeamSeasons: TeamSeason[] = [];
+  allTeamSeasonsWithStatus: TeamSeasonWithStatus[] = [];
   
   dropdownOpen = false;
   animationOn = false;
@@ -191,6 +200,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     if (!this.teamSeasons || this.teamSeasons.length === 0) {
       console.log('Team seasons not loaded yet, initializing empty selectable teams');
       this.selectableTeamSeasons = [];
+      this.allTeamSeasonsWithStatus = [];
       // Only initialize shuffle cards if shuffle mode is enabled
       if (this.isShuffleCardsEnabled()) {
         this.initializeShuffleCards();
@@ -204,17 +214,27 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     // Store previous selectable teams for comparison
     const previousSelectableTeams = this.selectableTeamSeasons.map(ts => ts.code);
     
-    this.selectableTeamSeasons = this.teamSeasons.filter(teamSeason => {
+    // Build team seasons with status for both dropdown and shuffle cards
+    this.allTeamSeasonsWithStatus = this.teamSeasons.map(teamSeason => {
+      let isSelectable = true;
+      let reason = '';
+      
       if(this.currentSeason){
-        let isSelectable = this.currentSeason.maxPlayersAllowed > (teamSeason.totalPlayer || 0);
-        console.log(`Team ${teamSeason.team.name}: players ${teamSeason.totalPlayer || 0}/${this.currentSeason.maxPlayersAllowed} - selectable: ${isSelectable}`);
-        
-        if(isSelectable && (this.currentPlayerLevel && this.currentPlayerLevel.isFree)){
-          isSelectable = this.currentSeason.maxFreeAllowed > (teamSeason.totalFreeUsed || 0);
-          console.log(`Team ${teamSeason.team.name}: free players ${teamSeason.totalFreeUsed || 0}/${this.currentSeason.maxFreeAllowed} - selectable: ${isSelectable}`);
+        // Check player limit
+        if(this.currentSeason.maxPlayersAllowed <= (teamSeason.totalPlayer || 0)) {
+          isSelectable = false;
+          reason = `Players Full (${teamSeason.totalPlayer}/${this.currentSeason.maxPlayersAllowed})`;
         }
         
-        // Filter out teams whose nextPlayerBudget is below current level base price
+        // Check free player limit for free levels
+        if(isSelectable && (this.currentPlayerLevel && this.currentPlayerLevel.isFree)){
+          if(this.currentSeason.maxFreeAllowed <= (teamSeason.totalFreeUsed || 0)) {
+            isSelectable = false;
+            reason = `Free Players Full (${teamSeason.totalFreeUsed}/${this.currentSeason.maxFreeAllowed})`;
+          }
+        }
+        
+        // Check budget for non-free levels
         if(isSelectable && this.currentPlayerLevel && !this.currentPlayerLevel.isFree) {
           const matchingLevel = teamSeason.teamSeasonPlayerLevels?.find(
             level => level.playerLevel.code === this.currentPlayerLevelCode
@@ -224,18 +244,26 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
             const baseAmount = this.currentPlayerLevel.baseAmount || 0;
             if(nextBudget < baseAmount) {
               isSelectable = false;
-              console.log(`Team ${teamSeason.team.name}: budget ${nextBudget} < base ${baseAmount} - filtered out`);
+              reason = `Insufficient Budget (₹${nextBudget} < ₹${baseAmount})`;
             }
           }
         }
-        
-        return isSelectable;
-      }else{
-        console.log('No current season available for filtering');
-        return false;
+      } else {
+        isSelectable = false;
+        reason = 'No season data';
       }
       
+      return {
+        teamSeason,
+        isSelectable,
+        reason: isSelectable ? undefined : reason
+      };
     });
+    
+    // Extract selectable teams for backward compatibility
+    this.selectableTeamSeasons = this.allTeamSeasonsWithStatus
+      .filter(item => item.isSelectable)
+      .map(item => item.teamSeason);
     
     // Check if the selectable teams have changed
     const newSelectableTeams = this.selectableTeamSeasons.map(ts => ts.code);
@@ -257,7 +285,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     
     // Only initialize shuffle cards if shuffle mode is enabled
     if (this.isShuffleCardsEnabled()) {
-      console.log('Initializing shuffle cards for', this.selectableTeamSeasons.length, 'teams');
+      console.log('Initializing shuffle cards for', this.allTeamSeasonsWithStatus.length, 'teams');
       this.initializeShuffleCards();
     } else {
       console.log('Skipping shuffle cards initialization - shuffle mode disabled');
@@ -266,10 +294,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   initializeShuffleCards() {
-    this.shuffleCardsList = this.selectableTeamSeasons.map(teamSeason => ({
-      teamSeason,
+    this.shuffleCardsList = this.allTeamSeasonsWithStatus.map(item => ({
+      teamSeason: item.teamSeason,
       isFlipped: false,
-      isSelected: false
+      isSelected: false,
+      isSelectable: item.isSelectable,
+      reason: item.reason
     }));
   }
 
@@ -504,14 +534,14 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
         'warning'
       );
       return;
-    }else if (!this.playerForm.teamSeasonCode || !this.playerForm.amount) {
+    }else if (!this.playerForm.teamSeasonCode || (!this.currentPlayerLevel?.isFree && !this.playerForm.amount)) {
       this.uiService.showAlert(
         'Validation Error',
         'Please select team season and enter amount',
         'warning'
       );
       return;
-    }else if(this.nextPlayerBudget && this.nextPlayerBudget < this.playerForm.amount ){
+    }else if(!this.currentPlayerLevel?.isFree && this.nextPlayerBudget && this.nextPlayerBudget < (this.playerForm.amount || 0)){
       this.uiService.showAlert(
         'Validation Error',
         `Please enter amount within the max budget ₹${this.nextPlayerBudget}`,
@@ -757,6 +787,15 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       card.isSelected = false;
     });
     
+    // Only shuffle selectable cards
+    const selectableCards = this.shuffleCardsList.filter(card => card.isSelectable);
+    
+    if (selectableCards.length === 0) {
+      console.warn('No selectable teams available for shuffle');
+      this.isShuffling = false;
+      return;
+    }
+    
     // Create a fresh copy and properly shuffle using Fisher-Yates algorithm
     const shuffledArray = [...this.shuffleCardsList];
     for (let i = shuffledArray.length - 1; i > 0; i--) {
@@ -769,17 +808,23 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     
     // Debug: Log the shuffled order
     console.log('Shuffled order:', this.shuffleCardsList.map((card, index) => 
-      `${index}: ${card.teamSeason.team.name}`
+      `${index}: ${card.teamSeason.team.name} (${card.isSelectable ? 'selectable' : 'disabled'})`
     ));
     
     // Shuffle animation duration
     setTimeout(() => {
-      // Generate a truly random index
-      const randomIndex = Math.floor(Math.random() * this.shuffleCardsList.length);
-      console.log('Selected random index:', randomIndex, 'out of', this.shuffleCardsList.length);
-      console.log('Selected team:', this.shuffleCardsList[randomIndex]?.teamSeason?.team?.name);
+      // Generate a truly random index from selectable cards only
+      const selectableIndices = this.shuffleCardsList
+        .map((card, index) => card.isSelectable ? index : -1)
+        .filter(index => index !== -1);
       
-      this.selectCard(randomIndex);
+      const randomSelectableIndex = Math.floor(Math.random() * selectableIndices.length);
+      const selectedIndex = selectableIndices[randomSelectableIndex];
+      
+      console.log('Selected random index:', selectedIndex, 'out of', this.shuffleCardsList.length);
+      console.log('Selected team:', this.shuffleCardsList[selectedIndex]?.teamSeason?.team?.name);
+      
+      this.selectCard(selectedIndex);
       this.isShuffling = false;
     }, 2000); // 2 second shuffle animation
   }
@@ -796,6 +841,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     const selectedCard = this.shuffleCardsList[index];
     if (!selectedCard) {
       console.error('No card found at index:', index);
+      return;
+    }
+    
+    // Prevent selection of non-selectable cards
+    if (!selectedCard.isSelectable) {
+      console.warn('Cannot select non-selectable team:', selectedCard.teamSeason.team.name, 'Reason:', selectedCard.reason);
       return;
     }
     
@@ -837,10 +888,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     }
     
     // Reset to original order and clear selections
-    this.shuffleCardsList = this.selectableTeamSeasons.map(teamSeason => ({
-      teamSeason,
+    this.shuffleCardsList = this.allTeamSeasonsWithStatus.map(item => ({
+      teamSeason: item.teamSeason,
       isFlipped: false,
-      isSelected: false
+      isSelected: false,
+      isSelectable: item.isSelectable,
+      reason: item.reason
     }));
     this.hasSelectedCard = false;
     this.isShuffling = false;
