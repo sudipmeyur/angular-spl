@@ -454,6 +454,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
         isRtmUsed: false
       };
       this.selectedTeamSeason = null;
+      this.nextPlayerBudget = null;
       
       console.log('Player data populated with default amount:', defaultAmount, 'isFree:', this.currentPlayerLevel?.isFree);
     }
@@ -637,6 +638,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     };
     this.selectedTeamSeason = null;
     this.displayedPlayer = null;
+    this.nextPlayerBudget = null;
     
     console.log('Form data reset with default amount:', defaultAmount);
   }
@@ -793,6 +795,9 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.playerForm.teamSeasonCode = selectedCard.teamSeason.code;
     this.hasSelectedCard = true;
     
+    // Calculate next player budget for the selected team
+    this.calculateNextPlayerBudget(selectedCard.teamSeason);
+    
     // Reset RTM state when selecting a new team via shuffle to ensure proper state management
     // If the new team has exhausted RTM slots, turn OFF RTM automatically
     if (this.playerForm.isRtmUsed && this.isRtmDisabled()) {
@@ -825,6 +830,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.isShuffling = false;
     this.selectedTeamSeason = null;
     this.playerForm.teamSeasonCode = '';
+    this.nextPlayerBudget = null;
   }
 
   toggleRtm() {

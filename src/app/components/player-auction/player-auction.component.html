@@ -173,6 +173,16 @@
               </div>
             </div>
           </div>
+          <!-- Max Budget Alert -->
+          <div *ngIf="nextPlayerBudget !== null && !currentPlayerLevel?.isFree" class="max-budget-alert mb-2">
+            <div class="alert alert-warning d-flex align-items-center">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              <div class="budget-info">
+                <strong>MAX BUDGET: ₹{{nextPlayerBudget}}</strong>
+                <small class="d-block">Do not exceed this amount for {{selectedTeamSeason?.team?.name}}</small>
+              </div>
+            </div>
+          </div>
           <div class="mb-2">
             <div class="row">
               <div class="col-6">
@@ -195,16 +205,12 @@
               </div>
               <div class="col-6">
                 <div class="amount-section">
-                  <label class="form-label">
-                    Amount
-                    <span *ngIf="nextPlayerBudget !== null" class="max-budget-label" >
-                      (Max: ₹{{nextPlayerBudget}})
-                    </span>
-                  </label>
+                  <label class="form-label">Amount</label>
                   <div class="amount-input-container">
                     <input type="number" 
                            class="form-control form-control-sm amount-input" 
                            [class.readonly-input]="isAmountReadonly()"
+                           [class.amount-exceeds]="nextPlayerBudget !== null && playerForm.amount && playerForm.amount > nextPlayerBudget"
                            [(ngModel)]="playerForm.amount" 
                            name="amount" 
                            placeholder="Enter amount" 
@@ -212,9 +218,9 @@
                            [max]="nextPlayerBudget || 999.99"
                            [readonly]="isAmountReadonly()">
                     <small *ngIf="nextPlayerBudget !== null && playerForm.amount && playerForm.amount > nextPlayerBudget" 
-                           class="text-danger">
+                           class="text-danger budget-exceeded">
                       <i class="fas fa-exclamation-circle"></i>
-                      Amount exceeds max budget
+                      <strong>EXCEEDS MAX BUDGET BY ₹{{playerForm.amount - nextPlayerBudget}}</strong>
                     </small>
                   </div>
                 </div>

@@ -1094,18 +1094,74 @@ body::before {
   color: #dc3545;
 }
 
-/* Max Budget Label Styles */
-.max-budget-label {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 2px 8px;
-  font-size: 12px;
+/* Max Budget Alert Styles */
+.max-budget-alert {
+  animation: budgetPulse 2s ease-in-out infinite;
+}
+
+.max-budget-alert .alert {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 167, 38, 0.15));
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  color: #856404;
   font-weight: 600;
-  color: #FFD700;
-  background: rgba(255, 215, 0, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  margin: 0;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+}
+
+.max-budget-alert .alert i {
+  color: #ffc107;
+  font-size: 18px;
+}
+
+.budget-info strong {
+  font-size: 16px;
+  color: #856404;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.budget-info small {
+  color: #6c5700;
+  font-weight: 500;
+}
+
+@keyframes budgetPulse {
+  0%, 100% { 
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+/* Amount Input Enhanced Styles */
+.amount-input.amount-exceeds {
+  border-color: #dc3545 !important;
+  background-color: rgba(255, 107, 107, 0.1) !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.budget-exceeded {
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  margin-top: 6px !important;
+  padding: 4px 8px;
+  background: rgba(220, 53, 69, 0.1);
   border-radius: 4px;
-  letter-spacing: 0.5px;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.budget-exceeded i {
+  margin-right: 4px;
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
 }
 
 /* Toast Styles */
