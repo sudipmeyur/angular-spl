@@ -8,13 +8,23 @@
              class="team-logo"
              (error)="onImageError($event)">
       </div>
-      <div class="col-md-10">
+      <div class="col-md-9">
         <h1 class="team-name">{{ teamSeason?.team?.name }}</h1>
         <div class="team-info">
           <span class="badge me-2">Season: {{ currentSeasonCode }}</span>
           <span class="badge me-2">Budget: {{ formatAmount(currentSeason?.budgetLimit || 0) }}</span>
           <span class="badge">Spent: {{ formatAmount(teamSquadData.grandTotal) }}</span>
         </div>
+      </div>
+      <div class="col-md-1 text-end">
+        <button class="btn btn-outline-light btn-sm" 
+                (click)="generateTeamSquadPdf()" 
+                [disabled]="pdfLoading"
+                title="Generate PDF">
+          <i class="fas fa-file-pdf me-1" *ngIf="!pdfLoading"></i>
+          <i class="fas fa-spinner fa-spin me-1" *ngIf="pdfLoading"></i>
+          PDF
+        </button>
       </div>
     </div>
   </div>

@@ -69,6 +69,25 @@ body::before {
   color: #FFD700 !important;
 }
 
+/* PDF Button Styles */
+.btn-outline-light {
+  border-color: rgba(255, 215, 0, 0.5);
+  color: #FFD700;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline-light:hover {
+  background-color: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.8);
+  color: #FFD700;
+}
+
+.btn-outline-light:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Section Dividers */
 .section-divider {
   border: 2px solid rgba(255, 215, 0, 0.3);

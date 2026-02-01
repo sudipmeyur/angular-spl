@@ -36,6 +36,7 @@ export class TeamSquadComponent implements OnInit {
   teamSeason?: TeamSeason;
   loading: boolean = false;
   error: string = '';
+  pdfLoading: boolean = false;
 
   constructor(
     private playerService: PlayerService,
@@ -202,5 +203,29 @@ export class TeamSquadComponent implements OnInit {
 
   getCategoryIconAlt(category: any): string {
     return category ? category.name : 'Unknown Category';
+  }
+
+  generateTeamSquadPdf(): void {
+    if (!this.teamSeasonId) return;
+    
+    this.pdfLoading = true;
+    this.playerService.generateTeamSquadPdf(this.teamSeasonId).subscribe(
+      (pdfBlob: Blob) => {
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${this.teamSeason?.team?.name || 'Team'}_Squad_${this.currentSeasonCode}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        
+        // Also open in new tab for viewing
+        window.open(url, '_blank');
+        this.pdfLoading = false;
+      },
+      error => {
+        console.error('Error generating PDF:', error);
+        this.pdfLoading = false;
+      }
+    );
   }
 }

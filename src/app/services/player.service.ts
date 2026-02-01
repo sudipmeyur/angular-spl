@@ -119,6 +119,12 @@ export class PlayerService {
     );
   }
 
+  generateTeamSquadPdf(teamSeasonId: number): Observable<Blob> {
+    return this.httpClient.get(`${TEAM_SEASONS_URL}/${teamSeasonId}/pdf`, {
+      responseType: 'blob'
+    });
+  }
+
 }
 
 interface GetResponse {
