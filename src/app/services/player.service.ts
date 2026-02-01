@@ -9,7 +9,6 @@ import { PLAYERS_URL, PLAYER_TEAMS_URL, TEAM_SEASONS_URL, SEASONS_URL, PLAYER_LE
 import { Season } from '../common/season';
 import { PlayerLevel } from '../common/player-level';
 import { PlayerTeamInfo } from '../common/player-team-info';
-import { PlayerRevertRequest } from '../common/player-revert-request';
 
 @Injectable({
   providedIn: 'root'
@@ -111,6 +110,19 @@ export class PlayerService {
     );
   }
 
+  // File upload for player images
+  uploadPlayerImage(file: File, playerCode?: string): Observable<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (playerCode) {
+      formData.append('playerCode', playerCode);
+    }
+    
+    return this.httpClient.post<UploadResponse>('http://localhost:8080/api/upload/player-image', formData).pipe(
+      map(response => response.data.item)
+    );
+  }
+
 }
 
 interface GetResponse {
@@ -152,5 +164,11 @@ interface PlayerTeamInfosResponse {
 interface PlayerResponse {
   data: {
     item: Player;
+  }
+}
+
+interface UploadResponse {
+  data: {
+    item: string;
   }
 }

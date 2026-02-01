@@ -450,6 +450,144 @@ body::before {
   pointer-events: auto !important;
 }
 
+/* Shuffle Cards Styles */
+.shuffle-cards-container {
+  width: 100%;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 10px;
+}
+
+.shuffle-card {
+  width: 120px;
+  height: 80px;
+  perspective: 1000px;
+  cursor: pointer;
+  margin: 0 auto;
+}
+
+.shuffle-card.card-disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.shuffle-card.card-disabled .card-inner {
+  transform: rotateY(180deg) !important;
+  animation: none !important;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.shuffle-card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+.shuffle-card.shuffling.card-selectable .card-inner {
+  animation: shuffle-dance 0.5s ease-in-out infinite alternate;
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 8px;
+  border: 2px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-front {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.card-back {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  transform: rotateY(180deg);
+}
+
+.shuffle-card.card-disabled .card-back {
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+  border-color: #6c757d;
+}
+
+.card-back-design {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.card-back-design i {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.card-pattern {
+  width: 30px;
+  height: 30px;
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.1),
+    rgba(255,255,255,0.1) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  border-radius: 4px;
+}
+
+.card-team-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-bottom: 8px;
+  object-fit: cover;
+}
+
+.card-team-name {
+  font-size: 11px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.shuffle-card.selected .card-inner {
+  border: 3px solid #28a745;
+  box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+}
+
+.shuffle-controls {
+  margin: 20px 0;
+}
+
+.selected-team-display {
+  margin-top: 15px;
+}
+
+@keyframes shuffle-dance {
+  0% { transform: translateY(0px) rotateZ(0deg); }
+  50% { transform: translateY(-5px) rotateZ(2deg); }
+  100% { transform: translateY(0px) rotateZ(-2deg); }
+}
+
 #back {
   background: #eee;
   display: inline-block;

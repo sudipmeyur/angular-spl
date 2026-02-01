@@ -20,7 +20,7 @@
     <div class="col-md-4">
       <div id="stage" class="section-box-inner border border-warning h-100" style="border-width: 2px !important;">
         <div id="stage-inner">
-          <div class="envelop-member" id="wrapper" [style.display]="showEnvelope ? 'block' : 'none'">
+          <div class="envelop-member" id="wrapper" [style.display]="showEnvelope ? 'block' : 'none'" style="margin-top: 70px;">
             <div (click)="openEnvelop($event)" class="envelop-member envelope" [class.open]="envelopeOpen">
               <div class="envelop-member flap front"></div>
               <div class="envelop-member flap top"></div>
@@ -30,7 +30,10 @@
                 </a>
               </div>
             </div>
-            <button (click)="sendBack()" id="back" class="btn btn-outline-danger btn-sm rounded-circle">
+            <button (click)="sendBack()" 
+                    [disabled]="displayedPlayer"
+                    id="back" 
+                    class="btn btn-outline-danger btn-sm rounded-circle">
               <i class="fas fa-arrow-left"></i>
             </button>
           </div>
@@ -66,6 +69,7 @@
                         class="btn btn-sm" 
                         [class.btn-warning]="selectionMode === 'manual'"
                         [class.btn-outline-warning]="selectionMode !== 'manual'"
+                        [disabled]="isGloballyDisabled()"
                         (click)="setSelectionMode('manual')">
                   <i class="fas fa-list me-1"></i>Manual
                 </button>
@@ -74,7 +78,7 @@
                         [class.btn-warning]="selectionMode === 'shuffle'"
                         [class.btn-outline-warning]="selectionMode !== 'shuffle'"
                         [class.btn-disabled]="!isShuffleCardsEnabled()"
-                        [disabled]="!isShuffleCardsEnabled()"
+                        [disabled]="isGloballyDisabled() || !isShuffleCardsEnabled()"
                         (click)="setSelectionMode('shuffle')">
                   <i class="fas fa-random me-1"></i>Shuffle Cards
                 </button>
@@ -83,7 +87,9 @@
 
             <!-- Manual Selection Dropdown -->
             <div *ngIf="selectionMode === 'manual'" class="custom-dropdown">
-              <div class="dropdown-selected" (click)="toggleDropdown()">
+              <div class="dropdown-selected" 
+                   [class.disabled]="isGloballyDisabled()"
+                   (click)="!isGloballyDisabled() ? toggleDropdown() : null">
                 <div *ngIf="selectedTeamSeason; else placeholder" class="team-option" style="padding: 0; width: 100%;">
                   <div class="team-name-container">
                     <img [src]="selectedTeamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
@@ -105,7 +111,7 @@
                      class="team-option" 
                      [class.team-disabled]="!item.isSelectable"
                      [title]="item.reason || ''"
-                     (click)="item.isSelectable ? selectTeamSeason(item.teamSeason) : null">
+                     (click)="item.isSelectable && !isGloballyDisabled() ? selectTeamSeason(item.teamSeason) : null">
                   <div class="team-name-container">
                     <img [src]="item.teamSeason.team.logoUrl || 'external-images/images/team-placeholder.png'" alt="Team Logo" class="team-logo">
                     <span>{{item.teamSeason.team.name}}</span>
@@ -129,9 +135,10 @@
                      [class.selected]="card.isSelected"
                      [class.shuffling]="isShuffling"
                      [class.card-disabled]="!card.isSelectable"
+                     [class.card-selectable]="card.isSelectable"
                      [style.animation-delay.ms]="i * 100"
                      [title]="!card.isSelectable ? card.reason : ''"
-                     (click)="card.isSelectable ? selectCard(i) : null">
+                     (click)="card.isSelectable && !isGloballyDisabled() ? selectCard(i) : null">
                   <div class="card-inner">
                     <div class="card-front">
                       <div class="card-back-design">
@@ -152,12 +159,13 @@
                 <button type="button" 
                         class="btn btn-warning btn-sm me-2" 
                         (click)="shuffleCards()"
-                        [disabled]="isShuffling || hasSelectedCard">
+                        [disabled]="isGloballyDisabled() || isShuffling || hasSelectedCard">
                   <i class="fas fa-shuffle me-1"></i>
                   {{isShuffling ? 'Shuffling...' : 'Shuffle & Pick'}}
                 </button>
                 <button type="button" 
                         class="btn btn-outline-secondary btn-sm" 
+                        [disabled]="isGloballyDisabled()"
                         (click)="resetShuffle()"
                         *ngIf="hasSelectedCard">
                   <i class="fas fa-redo me-1"></i>Reset
@@ -199,7 +207,7 @@
                             [class.rtm-on]="playerForm.isRtmUsed"
                             [class.rtm-off]="!playerForm.isRtmUsed"
                             [class.rtm-disabled]="isRtmDisabled()"
-                            [disabled]="isRtmDisabled()"
+                            [disabled]="isGloballyDisabled() || isRtmDisabled()"
                             [title]="getRtmTooltip()"
                             (click)="toggleRtm()">
                       <i class="fas" [class.fa-toggle-on]="playerForm.isRtmUsed" [class.fa-toggle-off]="!playerForm.isRtmUsed"></i>
@@ -221,7 +229,8 @@
                            placeholder="Enter amount" 
                            step="0.5" 
                            [max]="nextPlayerBudget || 999.99"
-                           [readonly]="isAmountReadonly()">
+                           [readonly]="isAmountReadonly()"
+                           [disabled]="isGloballyDisabled()">
                     <small *ngIf="nextPlayerBudget !== null && playerForm.amount && playerForm.amount > nextPlayerBudget" 
                            class="text-danger budget-exceeded">
                       <i class="fas fa-exclamation-circle"></i>
@@ -233,9 +242,18 @@
             </div>
           </div>
           <div class="text-end">
-            <button type="button" (click)="saveSoldPlayer()" class="btn btn-secondary btn-sm me-2">Sold</button>
-            <button type="button" (click)="saveUnSoldPlayer()" class="btn btn-secondary btn-sm me-2">Unsold</button>
-            <button type="button" (click)="cancelSelection()" class="btn btn-secondary btn-sm">Cancel</button>
+            <button type="button" 
+                    [disabled]="isGloballyDisabled()"
+                    (click)="saveSoldPlayer()" 
+                    class="btn btn-secondary btn-sm me-2">Sold</button>
+            <button type="button" 
+                    [disabled]="isGloballyDisabled()"
+                    (click)="saveUnSoldPlayer()" 
+                    class="btn btn-secondary btn-sm me-2">Unsold</button>
+            <button type="button" 
+                    [disabled]="isGloballyDisabled()"
+                    (click)="cancelSelection()" 
+                    class="btn btn-secondary btn-sm">Cancel</button>
           </div>
         </form>
       </div>

@@ -85,6 +85,9 @@ export class PlayerUnsoldComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
+    // Add click outside listener for dropdown
+    document.addEventListener('click', this.onDocumentClick.bind(this));
+    
     this.seasonService.currentSeason$.subscribe(season => {
       if (season) {
         this.currentSeason = season;
@@ -127,6 +130,8 @@ export class PlayerUnsoldComponent implements OnInit {
   }
 
   ngOnDestroy(): void {
+    // Remove document click listener
+    document.removeEventListener('click', this.onDocumentClick.bind(this));
     
     this.resetFormData();
     this.closeEnvelope();
@@ -666,6 +671,10 @@ export class PlayerUnsoldComponent implements OnInit {
     return this.unsoldType?.isRandomTeamSelection === true;
   }
 
+  isGloballyDisabled(): boolean {
+    return this.unsoldType?.isRandomTeamSelection !== true && !this.displayedPlayer;
+  }
+
   shuffleCards() {
     // Skip processing if shuffle cards are not enabled
     if (!this.isShuffleCardsEnabled()) {
@@ -910,6 +919,15 @@ export class PlayerUnsoldComponent implements OnInit {
   // Amount input methods
   isAmountReadonly(): boolean {
     return this.unsoldType?.isUnsold === true;
+  }
+
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    const dropdown = this.el.nativeElement.querySelector('.custom-dropdown');
+    
+    if (dropdown && !dropdown.contains(target)) {
+      this.dropdownOpen = false;
+    }
   }
 
 }

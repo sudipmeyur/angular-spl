@@ -105,9 +105,16 @@
            [class.selected]="selectedPlayer && selectedPlayer.id === player.id"
            (click)="selectPlayer(player)">
         <div class="card-header">
-          <img [src]="getPlayerImageUrl(player)" 
-               alt="{{player.name}}" class="player-avatar"
-               (error)="onPlayerImageError($event)">
+          <div class="player-image-container">
+            <img [src]="getPlayerImageUrl(player)" 
+                 alt="{{player.name}}" class="player-avatar"
+                 (error)="onPlayerImageError($event)">
+            <img *ngIf="player.category" 
+                 [src]="getCategoryIconPath(player.category)" 
+                 [alt]="getCategoryIconAlt(player.category)"
+                 [title]="player.category.name"
+                 class="category-icon-overlay">
+          </div>
           <div class="player-level-badge">
             {{player.playerLevel.code.toUpperCase()}}
           </div>
@@ -152,9 +159,16 @@
               [class.selected]="selectedPlayer && selectedPlayer.id === player.id">
             <td>
               <div class="player-info-cell">
-                <img [src]="getPlayerImageUrl(player)" 
-                     class="player-avatar-small"
-                     (error)="onPlayerImageError($event)">
+                <div class="player-image-container">
+                  <img [src]="getPlayerImageUrl(player)" 
+                       class="player-avatar-small"
+                       (error)="onPlayerImageError($event)">
+                  <img *ngIf="player.category" 
+                       [src]="getCategoryIconPath(player.category)" 
+                       [alt]="getCategoryIconAlt(player.category)"
+                       [title]="player.category.name"
+                       class="category-icon-overlay-small">
+                </div>
                 <span>{{player.name}}</span>
               </div>
             </td>
@@ -259,6 +273,11 @@
         <div class="player-image-container">
           <img [src]="selectedPlayer.imageUrl || 'external-images/images/placeholder.png'" 
                alt="{{selectedPlayer.name}}" class="player-image-large">
+          <img *ngIf="selectedPlayer.category" 
+               [src]="getCategoryIconPath(selectedPlayer.category)" 
+               [alt]="getCategoryIconAlt(selectedPlayer.category)"
+               [title]="selectedPlayer.category.name"
+               class="category-icon-overlay-large">
           <div class="player-level-badge">{{selectedPlayer.playerLevel.code.toUpperCase()}}</div>
         </div>
         <div class="player-basic-info">
@@ -275,6 +294,15 @@
           <div class="detail-row">
             <span class="label">Player Level:</span>
             <span class="value">{{selectedPlayer.playerLevel.name}} ({{selectedPlayer.playerLevel.code.toUpperCase()}})</span>
+          </div>
+          <div class="detail-row" *ngIf="selectedPlayer.category">
+            <span class="label">Category:</span>
+            <span class="value">
+              <img [src]="getCategoryIconPath(selectedPlayer.category)" 
+                   [alt]="getCategoryIconAlt(selectedPlayer.category)"
+                   class="category-icon-inline">
+              {{selectedPlayer.category.name}}
+            </span>
           </div>
           <div class="detail-row" *ngIf="selectedPlayer.playerLevel.baseAmount">
             <span class="label">Base Amount:</span>
@@ -372,18 +400,21 @@
                     </button>
                   </div>
                   
-                  <div class="manual-upload-instructions">
-                    <h6><i class="fas fa-info-circle"></i> Manual Upload Required</h6>
-                    <ol>
-                      <li>Save this image as: <code>{{ suggestedFileName }}</code></li>
-                      <li>Copy the file to: <code>src/external-images/images/players/</code></li>
-                      <li>The image will be available at: <code>{{ getAssetPath() }}</code></li>
-                    </ol>
+                  <div class="upload-actions">
                     <button type="button" 
-                            class="btn btn-outline-primary btn-sm"
-                            (click)="copyAssetPath()">
-                      <i class="fas fa-copy"></i> Copy Asset Path
+                            class="btn btn-primary btn-sm"
+                            [disabled]="isUploading"
+                            (click)="uploadSelectedFile()">
+                      <i class="fas" [class.fa-upload]="!isUploading" [class.fa-spinner]="isUploading" [class.fa-spin]="isUploading"></i>
+                      {{ isUploading ? 'Uploading...' : 'Upload Image' }}
                     </button>
+                  </div>
+                  
+                  <div class="upload-progress" *ngIf="uploadProgress > 0">
+                    <div class="progress">
+                      <div class="progress-bar" [style.width.%]="uploadProgress"></div>
+                    </div>
+                    <small>{{ uploadProgress }}% uploaded</small>
                   </div>
                 </div>
               </div>
@@ -467,6 +498,26 @@
             </select>
             <div class="invalid-feedback" *ngIf="playerForm.submitted && !editForm.playerLevel">
               Player level is required
+            </div>
+          </div>
+        </div>
+
+        <!-- Player Category Section -->
+        <div class="form-section">
+          <h6><i class="fas fa-tags"></i> Player Category</h6>
+          <div class="form-group">
+            <label for="playerCategory" class="form-label">Category</label>
+            <select id="playerCategory" 
+                    name="playerCategory" 
+                    class="form-control" 
+                    [(ngModel)]="editForm.category">
+              <option [ngValue]="undefined">No category</option>
+              <option *ngFor="let category of playerCategories" [ngValue]="category">
+                {{category.name}}
+              </option>
+            </select>
+            <div class="form-help">
+              <small class="text-muted">Select the player's cricket category (optional)</small>
             </div>
           </div>
         </div>

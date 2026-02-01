@@ -1,0 +1,13 @@
+<!-- This is a placeholder. Replace with actual 32x32 PNG icons -->
+<!-- You need to create these PNG files:
+- allrounder.png
+- batting-allrounder.png  
+- batsman.png
+- bowling-allrounder.png
+- bowler.png
+- keeper-batter.png
+- commentary.png
+- fielding.png
+- nothing.png
+- unknown.png
+-->

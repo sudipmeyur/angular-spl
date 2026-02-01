@@ -94,6 +94,9 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       this.currentToast = toast;
     });
     
+    // Add click outside listener for dropdown
+    document.addEventListener('click', this.onDocumentClick.bind(this));
+    
     this.seasonService.currentSeason$.subscribe(season => {
       if (season) {
         this.currentSeason = season;
@@ -138,6 +141,8 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Remove document click listener
+    document.removeEventListener('click', this.onDocumentClick.bind(this));
     
     this.resetFormData();
     this.closeEnvelope();
@@ -296,7 +301,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   initializeShuffleCards() {
     this.shuffleCardsList = this.allTeamSeasonsWithStatus.map(item => ({
       teamSeason: item.teamSeason,
-      isFlipped: false,
+      isFlipped: !item.isSelectable, // Auto-flip disabled cards to show team info
       isSelected: false,
       isSelectable: item.isSelectable,
       reason: item.reason
@@ -480,6 +485,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   populatePlayerData() {
     if (this.selectedPlayer) {
       this.displayedPlayer = this.selectedPlayer;
+      console.log('Having displayed Player : '+ this.displayedPlayer);
       
       // Set default amount based on player level
       let defaultAmount: number | null = null;
@@ -769,6 +775,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     return this.currentPlayerLevel?.isRandomTeamSelection === true;
   }
 
+  isGloballyDisabled(): boolean {
+    return this.currentPlayerLevel?.isRandomTeamSelection !== true && !this.displayedPlayer;
+  }
+
   shuffleCards() {
     // Skip processing if shuffle cards are not enabled
     if (!this.isShuffleCardsEnabled()) {
@@ -781,10 +791,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     this.isShuffling = true;
     this.hasSelectedCard = false;
     
-    // Reset all cards
+    // Reset only selectable cards - keep disabled cards flipped
     this.shuffleCardsList.forEach(card => {
-      card.isFlipped = false;
-      card.isSelected = false;
+      if (card.isSelectable) {
+        card.isFlipped = false;
+        card.isSelected = false;
+      }
     });
     
     // Only shuffle selectable cards
@@ -796,15 +808,22 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Create a fresh copy and properly shuffle using Fisher-Yates algorithm
-    const shuffledArray = [...this.shuffleCardsList];
-    for (let i = shuffledArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
-    }
+    // Create array of only selectable cards for shuffling
+    const selectableIndices = this.shuffleCardsList
+      .map((card, index) => card.isSelectable ? index : -1)
+      .filter(index => index !== -1);
     
-    // Update the array reference to trigger change detection
-    this.shuffleCardsList = shuffledArray;
+    // Shuffle only the selectable cards using Fisher-Yates algorithm
+    for (let i = selectableIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const indexA = selectableIndices[i];
+      const indexB = selectableIndices[j];
+      
+      // Swap only the teamSeason data, preserve disabled card states
+      const tempTeamSeason = this.shuffleCardsList[indexA].teamSeason;
+      this.shuffleCardsList[indexA].teamSeason = this.shuffleCardsList[indexB].teamSeason;
+      this.shuffleCardsList[indexB].teamSeason = tempTeamSeason;
+    }
     
     // Debug: Log the shuffled order
     console.log('Shuffled order:', this.shuffleCardsList.map((card, index) => 
@@ -814,12 +833,12 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
     // Shuffle animation duration
     setTimeout(() => {
       // Generate a truly random index from selectable cards only
-      const selectableIndices = this.shuffleCardsList
+      const availableSelectableIndices = this.shuffleCardsList
         .map((card, index) => card.isSelectable ? index : -1)
         .filter(index => index !== -1);
       
-      const randomSelectableIndex = Math.floor(Math.random() * selectableIndices.length);
-      const selectedIndex = selectableIndices[randomSelectableIndex];
+      const randomSelectableIndex = Math.floor(Math.random() * availableSelectableIndices.length);
+      const selectedIndex = availableSelectableIndices[randomSelectableIndex];
       
       console.log('Selected random index:', selectedIndex, 'out of', this.shuffleCardsList.length);
       console.log('Selected team:', this.shuffleCardsList[selectedIndex]?.teamSeason?.team?.name);
@@ -887,10 +906,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       return;
     }
     
-    // Reset to original order and clear selections
+    // Reset to original order and clear selections, but keep disabled cards flipped
     this.shuffleCardsList = this.allTeamSeasonsWithStatus.map(item => ({
       teamSeason: item.teamSeason,
-      isFlipped: false,
+      isFlipped: !item.isSelectable, // Keep disabled cards flipped to show team info
       isSelected: false,
       isSelectable: item.isSelectable,
       reason: item.reason
@@ -1071,6 +1090,15 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
       'warning': 'fas fa-exclamation-triangle'
     };
     return iconMap[this.currentToast?.type || 'info'];
+  }
+
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    const dropdown = this.el.nativeElement.querySelector('.custom-dropdown');
+    
+    if (dropdown && !dropdown.contains(target)) {
+      this.dropdownOpen = false;
+    }
   }
 
   executeToastAction(): void {
