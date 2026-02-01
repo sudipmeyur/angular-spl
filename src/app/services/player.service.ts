@@ -89,15 +89,11 @@ export class PlayerService {
 
   // CRUD operations for Player Master
   createPlayer(player: Player): Observable<Player> {
-    return this.httpClient.post<PlayerResponse>(PLAYERS_URL, player).pipe(
-      map(response => response.data.item)
-    );
+    return this.httpClient.post<Player>(PLAYERS_URL, player);
   }
 
   updatePlayer(id: number, player: Player): Observable<Player> {
-    return this.httpClient.put<PlayerResponse>(`${PLAYERS_URL}/${id}`, player).pipe(
-      map(response => response.data.item)
-    );
+    return this.httpClient.put<Player>(`${PLAYERS_URL}/${id}`, player);
   }
 
   deletePlayer(id: number): Observable<any> {

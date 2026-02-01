@@ -590,7 +590,7 @@ body::before {
 .player-type-icon {
   top: 8px;
   right: 8px;
-  background: rgba(255, 215, 0, 0.9);
+  background: #fff;
   border-radius: 50%;
   width: 32px;
   height: 32px;
@@ -604,6 +604,13 @@ body::before {
 .player-type-icon i {
   color: #0f1419;
   font-size: 14px;
+}
+
+.player-type-icon .category-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .player-info {

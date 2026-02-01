@@ -191,4 +191,16 @@ export class TeamSquadComponent implements OnInit {
     if (percentage <= 90) return 'bg-warning';
     return 'bg-danger';
   }
+
+  // Category icon methods
+  getCategoryIconPath(category: any): string {
+    if (!category || !category.iconPath) {
+      return 'external-images/images/player-categories/unknown.png';
+    }
+    return `${category.iconPath}`;
+  }
+
+  getCategoryIconAlt(category: any): string {
+    return category ? category.name : 'Unknown Category';
+  }
 }

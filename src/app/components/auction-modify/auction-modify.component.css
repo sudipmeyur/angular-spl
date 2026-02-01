@@ -508,6 +508,32 @@ body::before {
   transition: transform 0.3s ease;
 }
 
+.player-type-icon {
+  top: 8px;
+  right: 8px;
+  background: #fff;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.player-type-icon i {
+  color: #0f1419;
+  font-size: 14px;
+}
+
+.player-type-icon .category-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .player-status-badge {
   position: absolute;
   top: 8px;
@@ -522,6 +548,23 @@ body::before {
   z-index: 10;
   background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
+}
+
+.player-status-corner-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .status-sold {
@@ -719,12 +762,44 @@ body::before {
   gap: 10px;
 }
 
+.player-avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
 .player-avatar-small {
   width: 35px;
   height: 35px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.player-type-icon-small {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: rgba(255, 215, 0, 0.9);
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.player-type-icon-small i {
+  color: #0f1419;
+  font-size: 8px;
+}
+
+.player-type-icon-small .category-icon-small {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .status-badge {

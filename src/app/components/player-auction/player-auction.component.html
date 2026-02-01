@@ -47,7 +47,12 @@
         <div class="player-image-container">
           <img [src]="displayedPlayer?.imageUrl || 'external-images/images/placeholder.png'" alt="Player Image" class="img-fluid player-image">
           <div class="player-type-icon position-absolute">
-            <i class="fas fa-baseball-bat" title="Player Type"></i>
+            <img *ngIf="displayedPlayer?.category" 
+                 [src]="getCategoryIconPath(displayedPlayer?.category!)" 
+                 [alt]="getCategoryIconAlt(displayedPlayer?.category!)"
+                 [title]="displayedPlayer?.category?.name || 'Category'"
+                 class="category-icon">
+            <i *ngIf="!displayedPlayer?.category" class="fas fa-user" title="No Category"></i>
           </div>
         </div>
         <div class="player-info">

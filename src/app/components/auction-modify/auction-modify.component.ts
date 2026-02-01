@@ -374,4 +374,16 @@ export class AuctionModifyComponent implements OnInit {
       }
     });
   }
+
+  // Category icon methods
+  getCategoryIconPath(category: any): string {
+    if (!category || !category.iconPath) {
+      return 'external-images/images/player-categories/unknown.png';
+    }
+    return `${category.iconPath}`;
+  }
+
+  getCategoryIconAlt(category: any): string {
+    return category ? category.name : 'Unknown Category';
+  }
 }

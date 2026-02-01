@@ -6,6 +6,7 @@ import { PlayerService } from '../../../services/player.service';
 import { PlayerCategoryService } from '../../../services/player-category.service';
 import { SeasonService } from '../../../services/season.service';
 import { UiService } from '../../../services/ui.service';
+import { ToastService } from '../../../services/toast.service';
 
 @Component({
   selector: 'app-player',
@@ -39,17 +40,6 @@ export class PlayerComponent implements OnInit {
   suggestedFileName: string = '';
   isUploading: boolean = false;
   uploadProgress: number = 0;
-  
-  // Confirmation modal state
-  showConfirmation: boolean = false;
-  confirmationType: 'delete' | 'cancel' = 'delete';
-  isProcessing: boolean = false;
-  
-  // Toast notifications
-  showSuccessToast: boolean = false;
-  successMessage: string = '';
-  showErrorToast: boolean = false;
-  errorMessage: string = '';
 
   // Loading state
   isLoading: boolean = true;
@@ -67,6 +57,7 @@ export class PlayerComponent implements OnInit {
     private playerCategoryService: PlayerCategoryService,
     private seasonService: SeasonService, 
     private uiService: UiService,
+    private toastService: ToastService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -263,7 +254,7 @@ export class PlayerComponent implements OnInit {
     // Ensure we have player levels loaded
     if (!this.playerLevels || this.playerLevels.length === 0) {
       console.error('No player levels available');
-      this.showErrorMessage('Player levels not loaded. Please refresh the page.');
+      this.toastService.showError('Player levels not loaded. Please refresh the page.');
       return;
     }
     
@@ -295,50 +286,63 @@ export class PlayerComponent implements OnInit {
     this.isCreating = false;
     this.selectedPlayer = player;
     this.editForm = { ...player };
+    
     // Ensure player level is properly selected by finding the matching level object
     const matchingLevel = this.playerLevels.find(level => level.id === player.playerLevel.id);
     if (matchingLevel) {
       this.editForm.playerLevel = matchingLevel;
     }
+    
+    // Ensure player category is properly selected by finding the matching category object
+    if (player.category) {
+      const matchingCategory = this.playerCategories.find(category => category.code === player.category?.code);
+      if (matchingCategory) {
+        this.editForm.category = matchingCategory;
+      }
+    }
+    
     this.panelClosing = false;
   }
 
   savePlayer(): void {
     if (!this.editForm) return;
 
-    this.isProcessing = true;
+    const actionText = this.isCreating ? 'Creating player...' : 'Saving changes...';
+    this.uiService.showProcessing(actionText);
 
     if (this.isCreating) {
       this.playerService.createPlayer(this.editForm).subscribe({
         next: (createdPlayer: Player) => {
+          this.uiService.hideProcessing();
+          console.log('Created player:', createdPlayer); // Debug log
           this.allPlayers.push(createdPlayer);
           this.filterPlayers();
-          this.showSuccessMessage('Player created successfully');
-          this.resetForm();
-          this.isProcessing = false;
+          this.closePanel(); // Close panel after successful creation
+          this.toastService.showSuccess('Player created successfully');
         },
         error: (error) => {
-          console.error('Error creating player:', error);
-          this.showErrorMessage('Failed to create player');
-          this.isProcessing = false;
+          this.uiService.hideProcessing();
+          const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+          this.toastService.showError('Failed to create player: ' + errorMsg);
         }
       });
     } else if (this.isEditing && this.editForm.id) {
       this.playerService.updatePlayer(this.editForm.id, this.editForm).subscribe({
         next: (updatedPlayer: Player) => {
+          this.uiService.hideProcessing();
+          console.log('Updated player:', updatedPlayer); // Debug log
           const index = this.allPlayers.findIndex(p => p.id === updatedPlayer.id);
           if (index !== -1) {
             this.allPlayers[index] = updatedPlayer;
             this.filterPlayers();
           }
-          this.showSuccessMessage('Player updated successfully');
-          this.resetForm();
-          this.isProcessing = false;
+          this.closePanel(); // Close panel after successful update
+          this.toastService.showSuccess('Player updated successfully');
         },
         error: (error) => {
-          console.error('Error updating player:', error);
-          this.showErrorMessage('Failed to update player');
-          this.isProcessing = false;
+          this.uiService.hideProcessing();
+          const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+          this.toastService.showError('Failed to update player: ' + errorMsg);
         }
       });
     }
@@ -347,22 +351,20 @@ export class PlayerComponent implements OnInit {
   deletePlayer(): void {
     if (!this.selectedPlayer || !this.selectedPlayer.id) return;
 
-    this.isProcessing = true;
+    this.uiService.showProcessing('Deleting player...');
 
     this.playerService.deletePlayer(this.selectedPlayer.id).subscribe({
       next: () => {
+        this.uiService.hideProcessing();
         this.allPlayers = this.allPlayers.filter(p => p.id !== this.selectedPlayer!.id);
         this.filterPlayers();
-        this.showSuccessMessage('Player deleted successfully');
         this.closePanel();
-        this.isProcessing = false;
-        this.showConfirmation = false;
+        this.toastService.showSuccess('Player deleted successfully');
       },
       error: (error) => {
-        console.error('Error deleting player:', error);
-        this.showErrorMessage('Failed to delete player');
-        this.isProcessing = false;
-        this.showConfirmation = false;
+        this.uiService.hideProcessing();
+        const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+        this.toastService.showError('Failed to delete player: ' + errorMsg);
       }
     });
   }
@@ -375,8 +377,7 @@ export class PlayerComponent implements OnInit {
 
   cancelEdit(): void {
     if (this.hasUnsavedChanges()) {
-      this.confirmationType = 'cancel';
-      this.showConfirmation = true;
+      this.showCancelConfirmation();
     } else {
       this.resetForm();
     }
@@ -410,62 +411,38 @@ export class PlayerComponent implements OnInit {
     return this.allPlayers.filter(p => p.playerLevel.code === levelCode).length;
   }
 
-  // Confirmation modal methods
+  // Confirmation modal methods using UiService
   showDeleteConfirmation(): void {
-    this.confirmationType = 'delete';
-    this.showConfirmation = true;
+    if (!this.selectedPlayer) return;
+    
+    this.uiService.showConfirmation(
+      {
+        title: 'Delete Player',
+        message: `Are you sure you want to delete ${this.selectedPlayer.name}? This action cannot be undone.`,
+        icon: 'fas fa-trash',
+        type: 'danger',
+        confirmText: 'Delete Player',
+        cancelText: 'Cancel'
+      },
+      () => this.deletePlayer()
+    );
   }
 
-  cancelAction(): void {
-    this.showConfirmation = false;
-    this.isProcessing = false;
+  showCancelConfirmation(): void {
+    this.uiService.showConfirmation(
+      {
+        title: 'Discard Changes',
+        message: 'You have unsaved changes. Are you sure you want to discard them?',
+        icon: 'fas fa-exclamation-triangle',
+        type: 'warning',
+        confirmText: 'Discard Changes',
+        cancelText: 'Keep Editing'
+      },
+      () => this.resetForm()
+    );
   }
 
-  confirmAction(): void {
-    if (this.confirmationType === 'delete') {
-      this.deletePlayer();
-    } else if (this.confirmationType === 'cancel') {
-      this.resetForm();
-      this.showConfirmation = false;
-    }
-  }
 
-  private showSuccessMessage(message: string): void {
-    this.uiService.showSuccess(message, 4000, 'Success');
-  }
-
-  private showErrorMessage(message: string): void {
-    this.uiService.showError(message, 6000, 'Error');
-  }
-
-  // Confirmation modal helpers
-  getConfirmationTitle(): string {
-    return this.confirmationType === 'delete' ? 'Delete Player' : 'Discard Changes';
-  }
-
-  getConfirmationMessage(): string {
-    if (this.confirmationType === 'delete' && this.selectedPlayer) {
-      return `Are you sure you want to delete ${this.selectedPlayer.name}? This action cannot be undone.`;
-    } else if (this.confirmationType === 'cancel') {
-      return 'You have unsaved changes. Are you sure you want to discard them?';
-    }
-    return '';
-  }
-
-  getConfirmationIcon(): string {
-    return this.confirmationType === 'delete' ? 'fas fa-trash' : 'fas fa-exclamation-triangle';
-  }
-
-  getConfirmationButtonClass(): string {
-    return this.confirmationType === 'delete' ? 'btn-danger' : 'btn-warning';
-  }
-
-  getConfirmationButtonText(): string {
-    if (this.isProcessing) {
-      return this.confirmationType === 'delete' ? 'Deleting...' : 'Discarding...';
-    }
-    return this.confirmationType === 'delete' ? 'Delete Player' : 'Discard Changes';
-  }
 
   // Form validation
   isFormValid(): boolean {
@@ -516,14 +493,14 @@ export class PlayerComponent implements OnInit {
   private handleFileSelection(file: File): void {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      this.showErrorMessage('Please select a valid image file.');
+      this.toastService.showError('Please select a valid image file.');
       return;
     }
 
     // Validate file size (5MB limit)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      this.showErrorMessage('File size must be less than 5MB.');
+      this.toastService.showError('File size must be less than 5MB.');
       return;
     }
 
@@ -577,7 +554,7 @@ export class PlayerComponent implements OnInit {
         this.imageStatus = 'Upload successful!';
         this.uploadProgress = 100;
         this.isUploading = false;
-        this.showSuccessMessage('Image uploaded successfully!');
+        this.toastService.showSuccess('Image uploaded successfully!');
         
         // Clear the selected file after successful upload
         setTimeout(() => {
@@ -592,7 +569,8 @@ export class PlayerComponent implements OnInit {
         this.imageStatus = 'Upload failed';
         this.isUploading = false;
         this.uploadProgress = 0;
-        this.showErrorMessage('Failed to upload image: ' + (error.error?.message || error.message));
+        const errorMsg = error?.error?.message || error?.message || 'Unknown error occurred';
+        this.toastService.showError('Failed to upload image: ' + errorMsg);
       }
     });
   }
@@ -604,9 +582,9 @@ export class PlayerComponent implements OnInit {
   copyAssetPath(): void {
     const path = this.getAssetPath();
     navigator.clipboard.writeText(path).then(() => {
-      this.showSuccessMessage('Asset path copied to clipboard!');
+      this.toastService.showSuccess('Asset path copied to clipboard!');
     }).catch(() => {
-      this.showErrorMessage('Failed to copy to clipboard. Please copy manually.');
+      this.toastService.showError('Failed to copy to clipboard. Please copy manually.');
     });
   }
 
@@ -682,26 +660,14 @@ export class PlayerComponent implements OnInit {
       return 'external-images/images/placeholder.png';
     }
 
-    // Handle backend URLs that come in format like "images/players/1002.png"
-    if (player.imageUrl.includes('/')) {
-      // If it starts with 'images/', it's a backend URL format - convert to assets path
-      if (player.imageUrl.startsWith('images/')) {
-        return `external-images/${player.imageUrl}`;
-      }
-      // If it starts with 'external-images/', use it as-is
-      if (player.imageUrl.startsWith('external-images/')) {
-        return player.imageUrl;
-      }
-      // If it's an external URL, use it as-is
-      if (player.imageUrl.startsWith('http://') || player.imageUrl.startsWith('https://')) {
-        return player.imageUrl;
-      }
-      // Otherwise use it as-is
+    // Backend returns full path like 'external-images/images/players/1013.png'
+    // If it's an external URL, use it as-is
+    if (player.imageUrl.startsWith('http://') || player.imageUrl.startsWith('https://')) {
       return player.imageUrl;
     }
-
-    // For simple filenames, build the asset path
-    return `external-images/images/players/${player.imageUrl}`;
+    
+    // Use the backend-provided path directly
+    return player.imageUrl;
   }
 
   onPlayerImageError(event: Event): void {

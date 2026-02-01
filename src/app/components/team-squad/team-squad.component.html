@@ -34,6 +34,14 @@
                  [alt]="teamSquadData.manager.player.name"
                  class="player-image"
                  (error)="onImageError($event)">
+            <div class="player-type-icon position-absolute">
+              <img *ngIf="teamSquadData.manager.player.category" 
+                   [src]="getCategoryIconPath(teamSquadData.manager.player.category)" 
+                   [alt]="getCategoryIconAlt(teamSquadData.manager.player.category)"
+                   [title]="teamSquadData.manager.player.category.name || 'Category'"
+                   class="category-icon">
+              <i *ngIf="!teamSquadData.manager.player.category" class="fas fa-user" title="No Category"></i>
+            </div>
           </div>
           <div class="card-content">
             <h5 class="player-name" [title]="teamSquadData.manager.player.name">{{ teamSquadData.manager.player.name }}</h5>
@@ -76,6 +84,14 @@
                  [alt]="playerTeam.player.name"
                  class="player-image"
                  (error)="onImageError($event)">
+            <div class="player-type-icon position-absolute">
+              <img *ngIf="playerTeam.player.category" 
+                   [src]="getCategoryIconPath(playerTeam.player.category)" 
+                   [alt]="getCategoryIconAlt(playerTeam.player.category)"
+                   [title]="playerTeam.player.category.name || 'Category'"
+                   class="category-icon">
+              <i *ngIf="!playerTeam.player.category" class="fas fa-user" title="No Category"></i>
+            </div>
             <div class="level-badge">
               {{ level.playerLevel.code.toUpperCase() }}
             </div>

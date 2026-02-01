@@ -91,7 +91,15 @@
         <div class="card-header">
           <img [src]="player.player.imageUrl || 'external-images/images/placeholder.png'" 
                alt="{{player.player.name}}" class="player-avatar">
-          <div class="player-status-badge" [class]="getPlayerStatusClass(player)">
+          <div class="player-type-icon position-absolute">
+            <img *ngIf="player.player.category" 
+                 [src]="getCategoryIconPath(player.player.category)" 
+                 [alt]="getCategoryIconAlt(player.player.category)"
+                 [title]="player.player.category.name || 'Category'"
+                 class="category-icon">
+            <i *ngIf="!player.player.category" class="fas fa-user" title="No Category"></i>
+          </div>
+          <div class="player-status-corner-badge" [class]="getPlayerStatusClass(player)">
             {{getPlayerStatus(player)}}
           </div>
         </div>
@@ -140,8 +148,18 @@
               [class.selected]="selectedPlayer && selectedPlayer.player.id === player.player.id">
             <td>
               <div class="player-info-cell">
-                <img [src]="player.player.imageUrl || 'external-images/images/placeholder.png'" 
-                     class="player-avatar-small">
+                <div class="player-avatar-container">
+                  <img [src]="player.player.imageUrl || 'external-images/images/placeholder.png'" 
+                       class="player-avatar-small">
+                  <div class="player-type-icon-small">
+                    <img *ngIf="player.player.category" 
+                         [src]="getCategoryIconPath(player.player.category)" 
+                         [alt]="getCategoryIconAlt(player.player.category)"
+                         [title]="player.player.category.name || 'Category'"
+                         class="category-icon-small">
+                    <i *ngIf="!player.player.category" class="fas fa-user" title="No Category"></i>
+                  </div>
+                </div>
                 <span>{{player.player.name}}</span>
               </div>
             </td>
@@ -252,6 +270,14 @@
       <div class="player-image-container">
         <img [src]="selectedPlayer.player.imageUrl || 'external-images/images/placeholder.png'" 
              alt="{{selectedPlayer.player.name}}" class="player-image-large">
+        <div class="player-type-icon position-absolute">
+          <img *ngIf="selectedPlayer.player.category" 
+               [src]="getCategoryIconPath(selectedPlayer.player.category)" 
+               [alt]="getCategoryIconAlt(selectedPlayer.player.category)"
+               [title]="selectedPlayer.player.category.name || 'Category'"
+               class="category-icon">
+          <i *ngIf="!selectedPlayer.player.category" class="fas fa-user" title="No Category"></i>
+        </div>
         <div class="player-level-badge">{{selectedPlayer.player.playerLevel.code.toUpperCase()}}</div>
       </div>
       <div class="player-basic-info">

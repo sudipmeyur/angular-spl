@@ -160,6 +160,32 @@ body::before {
   justify-content: center;
 }
 
+.player-type-icon {
+  top: 6px;
+  right: 6px;
+  background: #fff;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.player-type-icon i {
+  color: #0f1419;
+  font-size: 10px;
+}
+
+.player-type-icon .category-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .player-image {
   width: 100%;
   height: 100%;

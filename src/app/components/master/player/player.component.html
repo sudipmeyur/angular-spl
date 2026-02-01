@@ -530,10 +530,9 @@
           </button>
           <button type="submit" 
                   class="btn btn-primary" 
-                  [disabled]="!isFormValid() || isProcessing">
-            <i class="fas fa-spinner fa-spin" *ngIf="isProcessing"></i>
-            <i [class]="isCreating ? 'fas fa-plus' : 'fas fa-save'" *ngIf="!isProcessing"></i>
-            {{isProcessing ? (isCreating ? 'Creating...' : 'Saving...') : (isCreating ? 'Create Player' : 'Save Changes')}}
+                  [disabled]="!isFormValid()">
+            <i [class]="isCreating ? 'fas fa-plus' : 'fas fa-save'"></i>
+            {{isCreating ? 'Create Player' : 'Save Changes'}}
           </button>
         </div>
       </form>
@@ -541,62 +540,5 @@
   </div>
 </div>
 
-<!-- Confirmation Modal -->
-<div class="confirmation-modal" *ngIf="showConfirmation">
-  <div class="modal-backdrop" (click)="cancelAction()"></div>
-  <div class="modal-content">
-    <div class="modal-header" [class]="confirmationType">
-      <div class="modal-icon">
-        <i [class]="getConfirmationIcon()"></i>
-      </div>
-      <h4>{{getConfirmationTitle()}}</h4>
-    </div>
-    
-    <div class="modal-body">
-      <div class="player-summary" *ngIf="selectedPlayer">
-        <img [src]="selectedPlayer.imageUrl || 'external-images/images/placeholder.png'" class="player-thumb">
-        <div class="player-info">
-          <h6>{{selectedPlayer.name}}</h6>
-          <p>{{selectedPlayer.code}} - {{selectedPlayer.playerLevel.code.toUpperCase()}}</p>
-        </div>
-      </div>
-      
-      <div class="confirmation-message">
-        <p>{{getConfirmationMessage()}}</p>
-        <div class="warning-note" *ngIf="confirmationType === 'delete'">
-          <i class="fas fa-exclamation-triangle"></i>
-          This action cannot be undone.
-        </div>
-      </div>
-    </div>
-    
-    <div class="modal-actions">
-      <button class="btn btn-secondary" (click)="cancelAction()">Cancel</button>
-      <button class="btn" [class]="getConfirmationButtonClass()" 
-              (click)="confirmAction()" [disabled]="isProcessing">
-        <i class="fas fa-spinner fa-spin" *ngIf="isProcessing"></i>
-        {{getConfirmationButtonText()}}
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Success Toast -->
-<div class="toast-container" *ngIf="showSuccessToast">
-  <div class="toast success">
-    <div class="toast-content">
-      <i class="fas fa-check-circle"></i>
-      <span>{{successMessage}}</span>
-    </div>
-  </div>
-</div>
-
-<!-- Error Toast -->
-<div class="toast-container" *ngIf="showErrorToast">
-  <div class="toast error">
-    <div class="toast-content">
-      <i class="fas fa-exclamation-circle"></i>
-      <span>{{errorMessage}}</span>
-    </div>
-  </div>
-</div>
+<!-- Shared Toast Component -->
+<app-shared-toast></app-shared-toast>
