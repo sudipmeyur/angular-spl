@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { Player } from '../../../common/player';
 import { PlayerLevel } from '../../../common/player-level';
 import { PlayerCategory } from '../../../common/player-category';
@@ -7,13 +7,14 @@ import { PlayerCategoryService } from '../../../services/player-category.service
 import { SeasonService } from '../../../services/season.service';
 import { UiService } from '../../../services/ui.service';
 import { ToastService } from '../../../services/toast.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-player',
   templateUrl: './player.component.html',
   styleUrls: ['./player.component.css']
 })
-export class PlayerComponent implements OnInit {
+export class PlayerComponent implements OnInit, OnDestroy {
 
   // Component state
   activeTab: string = 'l1';
@@ -52,6 +53,9 @@ export class PlayerComponent implements OnInit {
   filteredPlayers: Player[] = [];
   paginatedPlayers: Player[] = [];
 
+  // Subscription management
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private playerService: PlayerService, 
     private playerCategoryService: PlayerCategoryService,
@@ -72,7 +76,7 @@ export class PlayerComponent implements OnInit {
     this.loadingError = '';
 
     // Load player levels and categories
-    this.playerService.getPlayerLevels().subscribe({
+    const sub = this.playerService.getPlayerLevels().subscribe({
       next: (playerLevels: PlayerLevel[]) => {
         console.log('Player levels loaded from API:', playerLevels);
         this.playerLevels = playerLevels;
@@ -89,10 +93,11 @@ export class PlayerComponent implements OnInit {
         this.isLoading = false;
       }
     });
+    this.subscriptions.push(sub);
   }
 
   private loadCategories(): void {
-    this.playerCategoryService.getAllCategories().subscribe({
+    const sub = this.playerCategoryService.getAllCategories().subscribe({
       next: (categories: PlayerCategory[]) => {
         console.log('Player categories loaded:', categories);
         this.playerCategories = categories;
@@ -106,10 +111,11 @@ export class PlayerComponent implements OnInit {
         this.loadActivePlayers();
       }
     });
+    this.subscriptions.push(sub);
   }
 
   private loadActivePlayers(): void {
-    this.playerService.getActivePlayers().subscribe({
+    const sub = this.playerService.getActivePlayers().subscribe({
       next: (players: Player[]) => {
         this.allPlayers = players;
         this.filterPlayers();
@@ -121,6 +127,7 @@ export class PlayerComponent implements OnInit {
         this.isLoading = false;
       }
     });
+    this.subscriptions.push(sub);
   }
 
   // Tab management
@@ -311,7 +318,7 @@ export class PlayerComponent implements OnInit {
     this.uiService.showProcessing(actionText);
 
     if (this.isCreating) {
-      this.playerService.createPlayer(this.editForm).subscribe({
+      const sub = this.playerService.createPlayer(this.editForm).subscribe({
         next: (createdPlayer: Player) => {
           this.uiService.hideProcessing();
           console.log('Created player:', createdPlayer); // Debug log
@@ -326,8 +333,9 @@ export class PlayerComponent implements OnInit {
           this.toastService.showError('Failed to create player: ' + errorMsg);
         }
       });
+      this.subscriptions.push(sub);
     } else if (this.isEditing && this.editForm.id) {
-      this.playerService.updatePlayer(this.editForm.id, this.editForm).subscribe({
+      const sub = this.playerService.updatePlayer(this.editForm.id, this.editForm).subscribe({
         next: (updatedPlayer: Player) => {
           this.uiService.hideProcessing();
           console.log('Updated player:', updatedPlayer); // Debug log
@@ -345,6 +353,7 @@ export class PlayerComponent implements OnInit {
           this.toastService.showError('Failed to update player: ' + errorMsg);
         }
       });
+      this.subscriptions.push(sub);
     }
   }
 
@@ -353,7 +362,7 @@ export class PlayerComponent implements OnInit {
 
     this.uiService.showProcessing('Deleting player...');
 
-    this.playerService.deletePlayer(this.selectedPlayer.id).subscribe({
+    const sub = this.playerService.deletePlayer(this.selectedPlayer.id).subscribe({
       next: () => {
         this.uiService.hideProcessing();
         this.allPlayers = this.allPlayers.filter(p => p.id !== this.selectedPlayer!.id);
@@ -367,6 +376,7 @@ export class PlayerComponent implements OnInit {
         this.toastService.showError('Failed to delete player: ' + errorMsg);
       }
     });
+    this.subscriptions.push(sub);
   }
 
   resetForm(): void {
@@ -548,7 +558,7 @@ export class PlayerComponent implements OnInit {
     
     const playerCode = this.editForm.code || undefined;
     
-    this.playerService.uploadPlayerImage(this.selectedFile, playerCode).subscribe({
+    const sub = this.playerService.uploadPlayerImage(this.selectedFile, playerCode).subscribe({
       next: (imagePath: string) => {
         this.editForm!.imageUrl = imagePath;
         this.imageStatus = 'Upload successful!';
@@ -573,6 +583,7 @@ export class PlayerComponent implements OnInit {
         this.toastService.showError('Failed to upload image: ' + errorMsg);
       }
     });
+    this.subscriptions.push(sub);
   }
 
   getAssetPath(): string {
@@ -685,6 +696,12 @@ export class PlayerComponent implements OnInit {
 
   getCategoryIconAlt(category: PlayerCategory | undefined): string {
     return category ? category.name : 'Unknown Category';
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 
 }

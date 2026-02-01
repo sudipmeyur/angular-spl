@@ -1,16 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlayerService } from './services/player.service';
 import { SeasonService } from './services/season.service';
 import { TeamSeason } from './common/team-season';
 import { Season } from './common/season';
 import { PlayerLevel } from './common/player-level';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'angular-spl';
   availableTeams: TeamSeason[] = [];
   currentSeason: Season | null = null;
@@ -19,6 +20,9 @@ export class AppComponent implements OnInit {
   showConfirmModal: boolean = false;
   auctionCompletionNote: string = '';
   completingAuction: boolean = false;
+
+  // Subscription management
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private playerService: PlayerService,
@@ -31,19 +35,20 @@ export class AppComponent implements OnInit {
   }
 
   loadPlayerLevels() {
-  this.playerService.getPlayerLevels().subscribe(
-    playerLevels => {
-      this.playerLevels = playerLevels;
-      this.seasonService.setPlayerLevel(playerLevels);
-    },
-    error => {
-      console.error('Error loading player levels:', error);
-    }
-  );
-}
+    const sub = this.playerService.getPlayerLevels().subscribe(
+      playerLevels => {
+        this.playerLevels = playerLevels;
+        this.seasonService.setPlayerLevel(playerLevels);
+      },
+      error => {
+        console.error('Error loading player levels:', error);
+      }
+    );
+    this.subscriptions.push(sub);
+  }
 
   loadCurrentSeason() {
-    this.playerService.getCurrentSeason().subscribe(
+    const sub = this.playerService.getCurrentSeason().subscribe(
       season => {
         this.currentSeason = season;
         this.seasonService.setCurrentSeason(season);
@@ -53,11 +58,12 @@ export class AppComponent implements OnInit {
         console.error('Error loading current season:', error);
       }
     );
+    this.subscriptions.push(sub);
   }
 
   loadAvailableTeams() {
     if (this.currentSeason) {
-      this.playerService.getTeamSeasons(this.currentSeason.id).subscribe(
+      const sub = this.playerService.getTeamSeasons(this.currentSeason.id).subscribe(
         teams => {
           this.availableTeams = teams;
         },
@@ -65,6 +71,7 @@ export class AppComponent implements OnInit {
           console.error('Error loading teams:', error);
         }
       );
+      this.subscriptions.push(sub);
     }
   }
 
@@ -127,7 +134,7 @@ export class AppComponent implements OnInit {
     if (!this.currentSeason) return;
     
     this.completingAuction = true;
-    this.seasonService.completeAuction(this.currentSeason.id, this.auctionCompletionNote).subscribe(
+    const sub = this.seasonService.completeAuction(this.currentSeason.id, this.auctionCompletionNote).subscribe(
       (updatedSeason) => {
         this.currentSeason = updatedSeason;
         this.seasonService.setCurrentSeason(updatedSeason);
@@ -139,5 +146,12 @@ export class AppComponent implements OnInit {
         this.completingAuction = false;
       }
     );
+    this.subscriptions.push(sub);
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 }

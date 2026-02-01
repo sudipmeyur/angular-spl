@@ -1,12 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { UiService, ConfirmationConfig, ToastConfig } from '../../../services/ui.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-ui-overlay',
   templateUrl: './ui-overlay.component.html',
   styleUrls: ['./ui-overlay.component.css']
 })
-export class UiOverlayComponent implements OnInit {
+export class UiOverlayComponent implements OnInit, OnDestroy {
 
   isProcessing: boolean = false;
   processingMessage: string = 'Processing...';
@@ -23,31 +24,38 @@ export class UiOverlayComponent implements OnInit {
 
   currentToast: ToastConfig | null = null;
 
+  // Subscription management
+  private subscriptions: Subscription[] = [];
+
   constructor(private uiService: UiService) { }
 
   ngOnInit(): void {
     // Subscribe to processing state
-    this.uiService.isProcessing$.subscribe(isProcessing => {
+    const processingSub = this.uiService.isProcessing$.subscribe(isProcessing => {
       this.isProcessing = isProcessing;
     });
+    this.subscriptions.push(processingSub);
 
     // Subscribe to processing message
-    this.uiService.processingMessage$.subscribe(message => {
+    const messageSub = this.uiService.processingMessage$.subscribe(message => {
       this.processingMessage = message;
     });
+    this.subscriptions.push(messageSub);
 
     // Subscribe to confirmation state
-    this.uiService.showConfirmation$.subscribe(show => {
+    const confirmSub = this.uiService.showConfirmation$.subscribe(show => {
       this.showConfirmation = show;
     });
+    this.subscriptions.push(confirmSub);
 
     // Subscribe to confirmation config
-    this.uiService.confirmationConfig$.subscribe(config => {
+    const configSub = this.uiService.confirmationConfig$.subscribe(config => {
       this.confirmationConfig = config;
     });
+    this.subscriptions.push(configSub);
 
     // Subscribe to toast notifications
-    this.uiService.toast$.subscribe(toast => {
+    const toastSub = this.uiService.toast$.subscribe(toast => {
       console.log('UiOverlayComponent: Toast subscription received:', toast);
       this.currentToast = toast;
       if (toast) {
@@ -56,6 +64,7 @@ export class UiOverlayComponent implements OnInit {
         console.log('UiOverlayComponent: Toast is now hidden');
       }
     });
+    this.subscriptions.push(toastSub);
   }
 
   confirmAction(): void {
@@ -114,5 +123,11 @@ export class UiOverlayComponent implements OnInit {
       this.currentToast.action.callback();
       this.closeToast();
     }
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 }

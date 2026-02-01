@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ToastService, ToastData } from '../../../services/toast.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-shared-toast',
@@ -24,18 +25,29 @@ import { ToastService, ToastData } from '../../../services/toast.service';
   `,
   styleUrls: ['./shared-toast.component.css']
 })
-export class SharedToastComponent implements OnInit {
+export class SharedToastComponent implements OnInit, OnDestroy {
   currentToast: ToastData | null = null;
+
+  // Subscription management
+  private subscription: Subscription | null = null;
 
   constructor(private toastService: ToastService) { }
 
   ngOnInit(): void {
-    this.toastService.toast$.subscribe(toast => {
+    this.subscription = this.toastService.toast$.subscribe(toast => {
       this.currentToast = toast;
     });
   }
 
   hideToast(): void {
     this.toastService.hide();
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from subscription
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = null;
+    }
   }
 }

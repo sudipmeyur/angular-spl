@@ -9,6 +9,7 @@ import { Season } from 'src/app/common/season';
 import { PlayerLevel } from 'src/app/common/player-level';
 import { UiService } from 'src/app/services/ui.service';
 import { ToastService } from 'src/app/services/toast.service';
+import { Subscription } from 'rxjs';
 
 interface ShuffleCard {
   teamSeason: TeamSeason;
@@ -37,6 +38,10 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
   currentPlayerLevel: PlayerLevel | null |undefined = null;
   currentSeasonCode: string = 's6';
   currentSeasonId: number = 6;
+
+  // Subscription management
+  private subscriptions: Subscription[] = [];
+  private documentClickListener?: (event: Event) => void;
 
   players: Player[] = [];
   teamSeasons: TeamSeason[] = [];
@@ -90,19 +95,21 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Subscribe to toast for direct display
-    this.uiService.toast$.subscribe(toast => {
+    const toastSub = this.uiService.toast$.subscribe(toast => {
       this.currentToast = toast;
     });
+    this.subscriptions.push(toastSub);
     
     // Add click outside listener for dropdown
-    document.addEventListener('click', this.onDocumentClick.bind(this));
+    this.documentClickListener = this.onDocumentClick.bind(this);
+    document.addEventListener('click', this.documentClickListener);
     
-    this.seasonService.currentSeason$.subscribe(season => {
+    const seasonSub = this.seasonService.currentSeason$.subscribe(season => {
       if (season) {
         this.currentSeason = season;
         this.currentSeasonCode = season?.code || this.currentSeasonCode;
         this.currentSeasonId = season.id;
-        this.route.paramMap.subscribe(() => {
+        const routeSub = this.route.paramMap.subscribe(() => {
 
           const hasLevelId: boolean = this.route.snapshot.paramMap.has('playerLevelId');
           if (hasLevelId) {
@@ -135,18 +142,32 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
             }
           }
         });
+        this.subscriptions.push(routeSub);
         this.loadTeamSeasons();
       }
     });
+    this.subscriptions.push(seasonSub);
   }
 
   ngOnDestroy(): void {
-    // Remove document click listener
-    document.removeEventListener('click', this.onDocumentClick.bind(this));
+    // Cancel all animation frames to prevent memory leaks
+    this.animationFrames.forEach(frame => cancelAnimationFrame(frame));
+    this.animationFrames = [];
     
+    // Remove document click listener
+    if (this.documentClickListener) {
+      document.removeEventListener('click', this.documentClickListener);
+    }
+    
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+    
+    // Clear all data
     this.resetFormData();
     this.closeEnvelope();
     this.clearPlayerSelection();
+    this.boxPositions.clear();
   }
 
   listPlayers(callback?: () => void) {
@@ -154,7 +175,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
     this.uiService.showProcessing('Loading players...');
 
-    this.playerService.getPlayers(this.currentPlayerLevelId, this.currentSeasonId).subscribe(
+    const sub = this.playerService.getPlayers(this.currentPlayerLevelId, this.currentSeasonId).subscribe(
       data => {
         console.log('API response:', data);
         this.players = data;
@@ -167,13 +188,14 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
         this.uiService.showError('Failed to load players: ' + error.message);
       }
     );
+    this.subscriptions.push(sub);
   }
 
   loadTeamSeasons() {
     console.log('Loading team seasons from API for season ID:', this.currentSeasonId);
     this.uiService.showProcessing('Loading team seasons...');
     
-    this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
+    const sub = this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
       data => {
         console.log('Team seasons loaded from API:', data.length, 'teams');
         this.teamSeasons = data;
@@ -192,6 +214,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
         this.initializeShuffleCards();
       }
     );
+    this.subscriptions.push(sub);
   }
 
   rebuildSelectableTeamSeasons() {
@@ -587,7 +610,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
         console.log('saveSoldPlayer: Showing processing loader');
         this.uiService.showProcessing('Saving player...');
 
-        this.playerService.savePlayerTeam(request).subscribe(
+        const sub = this.playerService.savePlayerTeam(request).subscribe(
           () => {
             this.uiService.hideProcessing();
             
@@ -607,6 +630,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
             this.toastService.showError(`Failed to save ${this.selectedPlayer?.name}. Please try again.`);
           }
         );
+        this.subscriptions.push(sub);
       }
     );
   }
@@ -645,7 +669,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
 
         this.uiService.showProcessing('Saving player as unsold...');
 
-        this.playerService.saveUnsoldPlayer(request).subscribe(
+        const sub = this.playerService.saveUnsoldPlayer(request).subscribe(
           () => {
             this.uiService.hideProcessing();
             
@@ -665,6 +689,7 @@ export class PlayerAuctionComponent implements OnInit, OnDestroy {
             this.toastService.showError(`Failed to mark ${this.selectedPlayer?.name} as unsold. Please try again.`);
           }
         );
+        this.subscriptions.push(sub);
       }
     );
   }

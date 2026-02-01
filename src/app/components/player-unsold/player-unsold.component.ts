@@ -9,6 +9,7 @@ import { Season } from 'src/app/common/season';
 import { UnsoldType } from 'src/app/common/unsold-type';
 import { UiService } from 'src/app/services/ui.service';
 import { ToastService } from 'src/app/services/toast.service';
+import { Subscription } from 'rxjs';
 
 interface ShuffleCard {
   teamSeason: TeamSeason;
@@ -29,7 +30,7 @@ interface TeamSeasonWithStatus {
   templateUrl: './player-unsold.component.html',
   styleUrls: ['./player-unsold.component.css']
 })
-export class PlayerUnsoldComponent implements OnInit {
+export class PlayerUnsoldComponent implements OnInit, OnDestroy {
 
   unsoldTypeCode: string = 'us';
   unsoldTypeId: number = 1;
@@ -63,6 +64,10 @@ export class PlayerUnsoldComponent implements OnInit {
   animationFrames: any[] = [];
   showBudgetTable = false;
   
+  // Subscription management
+  private subscriptions: Subscription[] = [];
+  private documentClickListener?: (event: Event) => void;
+  
   playerForm: {
     teamSeasonCode: string;
     amount: number | null;
@@ -86,16 +91,14 @@ export class PlayerUnsoldComponent implements OnInit {
 
   ngOnInit(): void {
     // Add click outside listener for dropdown
-    document.addEventListener('click', this.onDocumentClick.bind(this));
+    this.documentClickListener = this.onDocumentClick.bind(this);
+    document.addEventListener('click', this.documentClickListener);
     
-    this.seasonService.currentSeason$.subscribe(season => {
+    const sub = this.seasonService.currentSeason$.subscribe(season => {
       if (season) {
         this.currentSeason = season;
         this.currentSeasonCode = season?.code || this.currentSeasonCode;
         this.currentSeasonId = season.id;
-
-
-
 
         // Clear any existing player selection when navigating to different level
         this.clearAllPlayerSelections();
@@ -123,19 +126,31 @@ export class PlayerUnsoldComponent implements OnInit {
           console.warn('Unsold Type Id not found for ID:', this.unsoldTypeId);
         }
 
-
         this.loadTeamSeasons();
       }
     });
+    this.subscriptions.push(sub);
   }
 
   ngOnDestroy(): void {
-    // Remove document click listener
-    document.removeEventListener('click', this.onDocumentClick.bind(this));
+    // Cancel all animation frames to prevent memory leaks
+    this.animationFrames.forEach(frame => cancelAnimationFrame(frame));
+    this.animationFrames = [];
     
+    // Remove document click listener
+    if (this.documentClickListener) {
+      document.removeEventListener('click', this.documentClickListener);
+    }
+    
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+    
+    // Clear all data
     this.resetFormData();
     this.closeEnvelope();
     this.clearPlayerSelection();
+    this.boxPositions.clear();
   }
 
   listPlayers(callback?: () => void) {
@@ -143,7 +158,7 @@ export class PlayerUnsoldComponent implements OnInit {
 
     this.uiService.showProcessing('Loading players...');
 
-    this.playerService.getUnsoldPlayers(this.currentSeasonId).subscribe(
+    const sub = this.playerService.getUnsoldPlayers(this.currentSeasonId).subscribe(
       data => {
         console.log('API response:', data);
         this.players = data;
@@ -156,11 +171,12 @@ export class PlayerUnsoldComponent implements OnInit {
         this.toastService.showError('Failed to load players: ' + error.message);
       }
     );
+    this.subscriptions.push(sub);
   }
 
   loadTeamSeasons() {
     console.log('Loading team seasons from API for season ID:', this.currentSeasonId);
-    this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
+    const sub = this.playerService.getTeamSeasons(this.currentSeasonId).subscribe(
       data => {
         console.log('Team seasons loaded from API:', data.length, 'teams');
         this.teamSeasons = data;
@@ -176,6 +192,7 @@ export class PlayerUnsoldComponent implements OnInit {
         this.initializeShuffleCards();
       }
     );
+    this.subscriptions.push(sub);
   }
 
   rebuildSelectableTeamSeasons() {
@@ -544,7 +561,7 @@ export class PlayerUnsoldComponent implements OnInit {
         console.log('saveSoldPlayer: Showing processing loader');
         this.uiService.showProcessing('Saving player...');
 
-        this.playerService.savePlayerTeam(request).subscribe(
+        const sub = this.playerService.savePlayerTeam(request).subscribe(
           () => {
             console.log('saveSoldPlayer: API call successful');
             this.uiService.hideProcessing();
@@ -561,6 +578,7 @@ export class PlayerUnsoldComponent implements OnInit {
             this.toastService.showError(`Failed to save ${this.selectedPlayer?.name}. Please try again.`);
           }
         );
+        this.subscriptions.push(sub);
       }
     );
   }

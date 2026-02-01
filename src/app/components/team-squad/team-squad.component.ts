@@ -1,14 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PlayerService } from 'src/app/services/player.service';
 import { SeasonService } from 'src/app/services/season.service';
 import { TeamSeason } from 'src/app/common/team-season';
 import { Season } from 'src/app/common/season';
 import { PlayerTeam } from 'src/app/common/player-team';
-
-
-
-
+import { Subscription } from 'rxjs';
 
 export interface TeamSquadData {
   manager?: PlayerTeam;
@@ -27,7 +24,7 @@ export interface TeamSquadData {
   templateUrl: './team-squad.component.html',
   styleUrls: ['./team-squad.component.css']
 })
-export class TeamSquadComponent implements OnInit {
+export class TeamSquadComponent implements OnInit, OnDestroy {
 
   teamSquadData: TeamSquadData | null = null;
   currentSeason: Season | null = null;
@@ -38,6 +35,9 @@ export class TeamSquadComponent implements OnInit {
   error: string = '';
   pdfLoading: boolean = false;
 
+  // Subscription management
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private playerService: PlayerService,
     private seasonService: SeasonService,
@@ -45,32 +45,17 @@ export class TeamSquadComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    // this.seasonService.currentSeason$.subscribe(season => {
-    //   if (season) {
-    //     this.currentSeason = season;
-    //     this.currentSeasonCode = season?.code || this.currentSeasonCode;
-    //     this.checkRouteParams();
-    //   }
-    // });
-
-    // Get team code from route parameters
-    // this.route.paramMap.subscribe(params => {
-    //   const teamCode = params.get('teamCode');
-    //   if (teamCode) {
-    //     this.teamSeasonCode = `${teamCode}_${this.currentSeasonCode}`;
-    //     this.loadTeamSquad();
-    //   }
-    // });
-
-    this.seasonService.currentSeason$.subscribe(season => {
+    const sub = this.seasonService.currentSeason$.subscribe(season => {
       if (season) {
         this.currentSeason = season;
         this.currentSeasonCode = season?.code || this.currentSeasonCode;
-        this.route.paramMap.subscribe(() => {
+        const routeSub = this.route.paramMap.subscribe(() => {
           this.loadTeamSquad();
         });
+        this.subscriptions.push(routeSub);
       }
     });
+    this.subscriptions.push(sub);
   }
 
 
@@ -88,7 +73,7 @@ export class TeamSquadComponent implements OnInit {
     console.log('Level Code:', this.teamSeasonId);
 
     // Load team squad data from API
-    this.playerService.getTeamSquad(this.teamSeasonId).subscribe(
+    const sub = this.playerService.getTeamSquad(this.teamSeasonId).subscribe(
       data => {
         this.teamSeason = data;
         this.teamSquadData = this.processTeamSquadData(this.teamSeason);
@@ -101,6 +86,7 @@ export class TeamSquadComponent implements OnInit {
         
       }
     );
+    this.subscriptions.push(sub);
   }
 
   private processTeamSquadData(data: TeamSeason): TeamSquadData {
@@ -209,7 +195,7 @@ export class TeamSquadComponent implements OnInit {
     if (!this.teamSeasonId) return;
     
     this.pdfLoading = true;
-    this.playerService.generateTeamSquadPdf(this.teamSeasonId).subscribe(
+    const sub = this.playerService.generateTeamSquadPdf(this.teamSeasonId).subscribe(
       (pdfBlob: Blob) => {
         const url = window.URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
@@ -227,5 +213,12 @@ export class TeamSquadComponent implements OnInit {
         this.pdfLoading = false;
       }
     );
+    this.subscriptions.push(sub);
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { PlayerLevel } from '../../common/player-level';
 import { Team } from '../../common/team';
 import { PlayerService } from '../../services/player.service';
@@ -8,13 +8,14 @@ import { ToastService } from '../../services/toast.service';
 import { Season } from '../../common/season';
 import { TeamSeason } from '../../common/team-season';
 import { PlayerTeamInfo } from '../../common/player-team-info';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-auction-modify',
   templateUrl: './auction-modify.component.html',
   styleUrls: ['./auction-modify.component.css']
 })
-export class AuctionModifyComponent implements OnInit {
+export class AuctionModifyComponent implements OnInit, OnDestroy {
 
   // Component state
   activeTab: string = 'l1';
@@ -42,6 +43,9 @@ export class AuctionModifyComponent implements OnInit {
   filteredPlayers: PlayerTeamInfo[] = [];
   paginatedPlayers: PlayerTeamInfo[] = []; // Players for current page
 
+  // Subscription management
+  private subscriptions: Subscription[] = [];
+
   constructor(
     private playerService: PlayerService, 
     private seasonService: SeasonService, 
@@ -51,12 +55,13 @@ export class AuctionModifyComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.seasonService.currentSeason$.subscribe(season => {
+    const sub = this.seasonService.currentSeason$.subscribe(season => {
       if (season) {
         this.currentSeason = season;
         this.loadData();
       }
     });
+    this.subscriptions.push(sub);
   }
 
   loadData(): void {
@@ -89,7 +94,7 @@ export class AuctionModifyComponent implements OnInit {
   }
 
   private loadAuctionResultPlayers(seasonId: number): void {
-    this.playerService.getAuctionResultPlayers(seasonId).subscribe({
+    const sub = this.playerService.getAuctionResultPlayers(seasonId).subscribe({
       next: (playerTeamInfos: PlayerTeamInfo[]) => {
         // Use PlayerTeamInfo directly
         this.allPlayers = playerTeamInfos;
@@ -105,6 +110,7 @@ export class AuctionModifyComponent implements OnInit {
         this.isLoading = false;
       }
     });
+    this.subscriptions.push(sub);
   }
  filterOutManagers(): void {
   this.allPlayers = this.allPlayers.filter(p => !p.teamInfo?.isManager);
@@ -333,7 +339,7 @@ export class AuctionModifyComponent implements OnInit {
 
     this.uiService.showProcessing('Releasing player...');
     
-    this.playerService.revertPlayerTeam(playerTeamCode).subscribe({
+    const sub = this.playerService.revertPlayerTeam(playerTeamCode).subscribe({
       next: () => {
         this.uiService.hideProcessing();
         this.closePanel();
@@ -346,6 +352,7 @@ export class AuctionModifyComponent implements OnInit {
         this.toastService.showError('Failed to release player: ' + errorMsg);
       }
     });
+    this.subscriptions.push(sub);
   }
 
   private unmarkPlayer(): void {
@@ -360,7 +367,7 @@ export class AuctionModifyComponent implements OnInit {
 
     this.uiService.showProcessing('Unmarking player...');
     
-    this.playerService.revertUnsoldPlayer(unsoldPlayerId.toString()).subscribe({
+    const sub = this.playerService.revertUnsoldPlayer(unsoldPlayerId.toString()).subscribe({
       next: () => {
         this.uiService.hideProcessing();
         this.closePanel();
@@ -373,6 +380,7 @@ export class AuctionModifyComponent implements OnInit {
         this.toastService.showError('Failed to unmark player: ' + errorMsg);
       }
     });
+    this.subscriptions.push(sub);
   }
 
   // Category icon methods
@@ -385,5 +393,11 @@ export class AuctionModifyComponent implements OnInit {
 
   getCategoryIconAlt(category: any): string {
     return category ? category.name : 'Unknown Category';
+  }
+
+  ngOnDestroy(): void {
+    // Unsubscribe from all subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
   }
 }
