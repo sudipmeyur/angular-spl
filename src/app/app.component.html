@@ -68,6 +68,11 @@
               <input class="au-input au-input-xl" type="text" name="search" placeholder="Search for data ..." />
               <button class="au-btn-submit" type="submit">Search</button>
             </form>
+            <div class="auction-complete-btn" *ngIf="currentSeason && !currentSeason.isAuctionCompleted">
+              <button class="btn btn-success btn-sm" (click)="openAuctionCompleteModal()">
+                <i class="fas fa-check-circle me-1"></i>Complete Auction
+              </button>
+            </div>
             <div class="cart-area d-n">
               <a href="#">
                 <div class="total">5<span> 10</span></div>
@@ -101,3 +106,58 @@
 
 <!-- UI Overlay Component - Always available at root level -->
 <app-ui-overlay></app-ui-overlay>
+
+<!-- Auction Complete Modal -->
+<div class="modal" [class.show]="showAuctionCompleteModal" [style.display]="showAuctionCompleteModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Complete Auction</h5>
+        <button type="button" class="btn-close" (click)="closeAuctionCompleteModal()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="auctionNote" class="form-label">Auction Completion Note</label>
+          <textarea class="form-control" id="auctionNote" rows="4" 
+                    [(ngModel)]="auctionCompletionNote" 
+                    placeholder="Enter completion notes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAuctionCompleteModal()">Cancel</button>
+        <button type="button" class="btn btn-success" 
+                (click)="showConfirmationModal()" 
+                [disabled]="completingAuction">
+          <i class="fas fa-spinner fa-spin me-1" *ngIf="completingAuction"></i>
+          <i class="fas fa-check me-1" *ngIf="!completingAuction"></i>
+          Complete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" [class.show]="showAuctionCompleteModal" [style.display]="showAuctionCompleteModal ? 'block' : 'none'"></div>
+
+<!-- Confirmation Modal -->
+<div class="modal" [class.show]="showConfirmModal" [style.display]="showConfirmModal ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Action</h5>
+        <button type="button" class="btn-close" (click)="closeConfirmationModal()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body text-center">
+        <i class="fas fa-question-circle fa-3x text-warning mb-3"></i>
+        <p>Do you want to complete the auction?</p>
+        <p class="text-muted small">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" (click)="closeConfirmationModal()">No</button>
+        <button type="button" class="btn btn-success" (click)="confirmCompleteAuction()">
+          <i class="fas fa-check me-1"></i>Yes, Complete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" [class.show]="showConfirmModal" [style.display]="showConfirmModal ? 'block' : 'none'"></div>

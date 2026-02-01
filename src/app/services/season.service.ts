@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 import { Season } from '../common/season';
 import { PlayerLevel } from '../common/player-level';
+import { SEASONS_URL } from '../config/constants';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +15,8 @@ export class SeasonService {
 
   public currentSeason$ = this.currentSeasonSubject.asObservable();
   public playerLevelMap$ = this.playerLevelMapSubject.asObservable();
+
+  constructor(private httpClient: HttpClient) {}
 
   setCurrentSeason(season: Season) {
     this.currentSeasonSubject.next(season);
@@ -40,4 +45,18 @@ export class SeasonService {
     const playerLevelMap = this.getPlayerLevelMap();
     return playerLevelMap?.get(id);
   }
+
+  completeAuction(seasonId: number, completionNote: string): Observable<Season> {
+    return this.httpClient.put<SeasonResponse>(`${SEASONS_URL}/${seasonId}/complete`, {
+      auctionCompletionNote: completionNote
+    }).pipe(
+      map(response => response.data.item)
+    );
+  }
+}
+
+interface SeasonResponse {
+  data: {
+    item: Season;
+  };
 }

@@ -26,3 +26,72 @@
   background-color: rgba(255, 215, 0, 0.15);
   color: #FFD700;
 }
+
+/* Auction Complete Button */
+.auction-complete-btn {
+  margin-left: 15px;
+}
+
+.auction-complete-btn .btn {
+  background: rgba(40, 167, 69, 0.1);
+  border-color: rgba(40, 167, 69, 0.5);
+  color: #28a745;
+  backdrop-filter: blur(10px);
+}
+
+.auction-complete-btn .btn:hover {
+  background: rgba(40, 167, 69, 0.2);
+  border-color: rgba(40, 167, 69, 0.8);
+  color: #28a745;
+}
+
+/* Modal Styles */
+.modal {
+  z-index: 1050;
+}
+
+.modal.show {
+  display: block !important;
+}
+
+.modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.modal-backdrop {
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1040;
+}
+
+.modal-backdrop.show {
+  display: block !important;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+}
+
+/* Confirmation Modal Specific Styles */
+.modal-sm .modal-content {
+  max-width: 400px;
+}
+
+.text-warning {
+  color: #ffc107 !important;
+}

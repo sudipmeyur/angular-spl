@@ -8,7 +8,7 @@
              class="team-logo"
              (error)="onImageError($event)">
       </div>
-      <div class="col-md-9">
+      <div class="col-md-9" *ngIf="!currentSeason?.isAuctionCompleted">
         <h1 class="team-name">{{ teamSeason?.team?.name }}</h1>
         <div class="team-info">
           <span class="badge me-2">Season: {{ currentSeasonCode }}</span>
@@ -16,7 +16,15 @@
           <span class="badge">Spent: {{ formatAmount(teamSquadData.grandTotal) }}</span>
         </div>
       </div>
-      <div class="col-md-1 text-end">
+      <div class="col-md-8" *ngIf="currentSeason?.isAuctionCompleted">
+        <h1 class="team-name">{{ teamSeason?.team?.name }}</h1>
+        <div class="team-info">
+          <span class="badge me-2">Season: {{ currentSeasonCode }}</span>
+          <span class="badge me-2">Budget: {{ formatAmount(currentSeason?.budgetLimit || 0) }}</span>
+          <span class="badge">Spent: {{ formatAmount(teamSquadData.grandTotal) }}</span>
+        </div>
+      </div>
+      <div class="col-md-1 text-end" *ngIf="currentSeason?.isAuctionCompleted">
         <button class="btn btn-outline-light btn-sm" 
                 (click)="generateTeamSquadPdf()" 
                 [disabled]="pdfLoading"

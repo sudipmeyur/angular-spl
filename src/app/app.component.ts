@@ -15,6 +15,10 @@ export class AppComponent implements OnInit {
   availableTeams: TeamSeason[] = [];
   currentSeason: Season | null = null;
   playerLevels: PlayerLevel[] = [];
+  showAuctionCompleteModal: boolean = false;
+  showConfirmModal: boolean = false;
+  auctionCompletionNote: string = '';
+  completingAuction: boolean = false;
 
   constructor(
     private playerService: PlayerService,
@@ -94,5 +98,46 @@ export class AppComponent implements OnInit {
         arrow.classList.add('fa-chevron-right');
       }
     }
+  }
+
+  openAuctionCompleteModal() {
+    this.showAuctionCompleteModal = true;
+    this.auctionCompletionNote = '';
+  }
+
+  closeAuctionCompleteModal() {
+    this.showAuctionCompleteModal = false;
+    this.auctionCompletionNote = '';
+  }
+
+  showConfirmationModal() {
+    this.showConfirmModal = true;
+  }
+
+  closeConfirmationModal() {
+    this.showConfirmModal = false;
+  }
+
+  confirmCompleteAuction() {
+    this.closeConfirmationModal();
+    this.completeAuction();
+  }
+
+  completeAuction() {
+    if (!this.currentSeason) return;
+    
+    this.completingAuction = true;
+    this.seasonService.completeAuction(this.currentSeason.id, this.auctionCompletionNote).subscribe(
+      (updatedSeason) => {
+        this.currentSeason = updatedSeason;
+        this.seasonService.setCurrentSeason(updatedSeason);
+        this.closeAuctionCompleteModal();
+        this.completingAuction = false;
+      },
+      (error) => {
+        console.error('Error completing auction:', error);
+        this.completingAuction = false;
+      }
+    );
   }
 }
