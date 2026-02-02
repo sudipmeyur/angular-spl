@@ -45,6 +45,20 @@
             "scripts": []
           },
           "configurations": {
+            "dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dev.ts"
+                }
+              ],
+              "optimization": {
+                "styles": {
+                  "minify": false,
+                  "inlineCritical": false
+                }
+              }
+            },
             "qa":{
               "fileReplacements": [
                 {
@@ -88,6 +102,10 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
+            "dev": {
+              "browserTarget": "angular-ecommerce:build:dev",
+              "port": 4201
+            },
             "qa": {
               "browserTarget": "angular-ecommerce:build:qa"
             },
